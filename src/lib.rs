@@ -3,12 +3,12 @@
 //! It wraps over a [`HashMap`]() for key->sequence id lookups,
 //! and an [`OrdMap`] for mapping sequence ids to values and tracking insertion order.
 //!
-//! Sequence ids are
+//! Sequence ids are always an incrementing index that the struct uses to keep the OrdMap ordered.
 //!
 //! It's an imbl-based implementation of [`indexmap`](https://docs.rs/indexmap)'s [`IndexMap`],
 //! with the notable exception of direct-index access such as [`get_index(usize)`].
-//! Providing index-based access would require a Vector<V> value and HashMap<K, usize> implementation,
-//! which would have crippled shift_remove() performance, or a smarter/more complex data structure.
+//! Providing index-based access would require a `Vector<V>` value and `HashMap<K, usize>` implementation,
+//! which would have crippled `shift_remove()` performance, or a smarter/more complex data structure.
 //!
 //! If [OrdMap is ever updated to support index access](https://github.com/jneem/imbl/issues/158) by tracking
 //! subtree sizes, this data structure would get indexed access for free. Until then, `.iter().nth()` must be used.
