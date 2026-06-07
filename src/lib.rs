@@ -1,9 +1,7 @@
 //! A hash map where the iteration order is based on insertion order.
 //!
 //! It wraps over a [`HashMap`]() for key->sequence id lookups,
-//! and an [`OrdMap`] for mapping sequence ids to values and tracking insertion order.
-//!
-//! Sequence ids are always an incrementing index that the struct uses to keep the OrdMap ordered.
+//! and an [`OrdMap`] for mapping incrementing sequence ids->values and tracking insertion order.
 //!
 //! It's an imbl-based implementation of [`indexmap`](https://docs.rs/indexmap)'s [`IndexMap`],
 //! with the notable exception of direct-index access such as [`get_index(usize)`].
