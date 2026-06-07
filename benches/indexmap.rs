@@ -358,29 +358,41 @@ where
 {
     let mut group = c.benchmark_group(group_name);
 
-    group.sample_size(10);
-    group.measurement_time(std::time::Duration::from_secs(3));
-    group.warm_up_time(std::time::Duration::from_secs(2));
+    group.sample_size(100);
+    group.measurement_time(std::time::Duration::from_secs(10));
+    group.warm_up_time(std::time::Duration::from_secs(3));
 
-    for size in &[100, 1000, 5000, 10000] {
+    let insert_sizes = if std::env::var("BENCH_STD").is_ok() {
+        &[100, 1000][..]
+    } else {
+        &[100, 1000, 5000, 10000][..]
+    };
+
+    let remove_sizes = if std::env::var("BENCH_STD").is_ok() {
+        &[100, 1000][..]
+    } else {
+        &[100, 1000, 5000, 10000][..]
+    };
+
+    for size in insert_sizes {
         group.bench_function(format!("lookup_{}", size), |b| {
             bench_lookup::<M, K, V>(b, *size)
         });
     }
 
-    for size in &[100, 1000, 5000, 10000] {
+    for size in insert_sizes {
         group.bench_function(format!("insert_{}", size), |b| {
             bench_insert::<M, K, V>(b, *size)
         });
     }
 
-    for size in &[100, 1000, 5000, 10000] {
+    for size in insert_sizes {
         group.bench_function(format!("insert_mut_{}", size), |b| {
             bench_insert_mut::<M, K, V>(b, *size)
         });
     }
 
-    for size in &[100, 1000, 5000] {
+    for size in remove_sizes {
         group.bench_function(format!("remove_{}", size), |b| {
             bench_remove::<M, K, V>(b, *size)
         });
@@ -389,7 +401,7 @@ where
         });
     }
 
-    for size in &[100, 1000, 5000, 10000] {
+    for size in insert_sizes {
         group.bench_function(format!("iter_{}", size), |b| {
             bench_iter::<M, K, V>(b, *size)
         });
@@ -490,15 +502,27 @@ fn bench_ordmap_big(c: &mut Criterion) {
 
 fn indexmap_benches(c: &mut Criterion) {
     bench_indexmap_i64(c);
-    bench_hashmap_std_i64(c);
+
+    if std::env::var("BENCH_STD").is_ok() {
+        bench_hashmap_std_i64(c);
+    }
+
     bench_hashmap_im_i64(c);
     bench_ordmap_i64(c);
     bench_indexmap_str(c);
-    bench_hashmap_std_str(c);
+
+    if std::env::var("BENCH_STD").is_ok() {
+        bench_hashmap_std_str(c);
+    }
+
     bench_hashmap_im_str(c);
     bench_ordmap_str(c);
     bench_indexmap_big(c);
-    bench_hashmap_std_big(c);
+
+    if std::env::var("BENCH_STD").is_ok() {
+        bench_hashmap_std_big(c);
+    }
+
     bench_hashmap_im_big(c);
     bench_ordmap_big(c);
     bench_indexmap_specific(c);

@@ -78,9 +78,9 @@ pub type IndexMap<K, V> = GenericIndexMap<K, V, RandomState, DefaultSharedPtr>;
 /// Most operations on this map are O(log n). Due to the extra indirection,
 /// it will be both slower than an OrdMap and a HashMap.
 pub struct GenericIndexMap<K, V, S, P: SharedPointerKind> {
-    index: GenericHashMap<K, usize, S, P>,
-    order: GenericOrdMap<usize, (K, V), P>,
-    next_index: usize,
+    index: GenericHashMap<K, u64, S, P>,
+    order: GenericOrdMap<u64, (K, V), P>,
+    next_index: u64,
 }
 
 impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
@@ -197,7 +197,7 @@ impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
     ///
     /// Time: O(n) where n is the size of the larger map.
     #[must_use]
-    pub fn diff<'a, 'b>(&'a self, other: &'b Self) -> ordmap::DiffIter<'a, 'b, usize, (K, V), P>
+    pub fn diff<'a, 'b>(&'a self, other: &'b Self) -> ordmap::DiffIter<'a, 'b, u64, (K, V), P>
     where
         K: Ord,
         V: PartialEq,
@@ -452,12 +452,11 @@ where
     where
         F: FnOnce(Option<V>) -> Option<V>,
     {
-        let pop = self.extract_with_key(&k);
-        match (f(pop.as_ref().map(|(_, v, _)| v.clone())), pop) {
-            (None, None) => self.clone(),
-            (Some(v), None) => self.update(k, v),
-            (None, Some((_, _, m))) => m,
-            (Some(v), Some((_, _, m))) => m.update(k, v),
+        let old_v = self.get(&k).cloned();
+        match f(old_v) {
+            None if self.contains_key(&k) => self.without(&k),
+            None => self.clone(),
+            Some(v) => self.update(k, v),
         }
     }
 
@@ -1049,7 +1048,7 @@ where
 
 /// An iterator over the key/value pairs of an index map.
 pub struct Iter<'a, K, V, P: SharedPointerKind> {
-    it: ordmap::Iter<'a, usize, (K, V), P>,
+    it: ordmap::Iter<'a, u64, (K, V), P>,
 }
 
 impl<'a, K, V, P: SharedPointerKind> Clone for Iter<'a, K, V, P> {
@@ -1090,7 +1089,7 @@ impl<'a, K, V, P> FusedIterator for Iter<'a, K, V, P> where P: SharedPointerKind
 
 /// An iterator over the keys of an index map.
 pub struct Keys<'a, K, V, P: SharedPointerKind> {
-    it: ordmap::Iter<'a, usize, (K, V), P>,
+    it: ordmap::Iter<'a, u64, (K, V), P>,
 }
 
 impl<'a, K, V, P> Iterator for Keys<'a, K, V, P>
@@ -1139,7 +1138,7 @@ where
 
 /// An iterator over the values of an index map.
 pub struct Values<'a, K, V, P: SharedPointerKind> {
-    it: ordmap::Iter<'a, usize, (K, V), P>,
+    it: ordmap::Iter<'a, u64, (K, V), P>,
 }
 
 impl<'a, K, V, P> Iterator for Values<'a, K, V, P>
@@ -1188,7 +1187,7 @@ where
 
 /// A consuming iterator over the elements of an index map.
 pub struct ConsumingIter<K, V, P: SharedPointerKind> {
-    it: ordmap::ConsumingIter<usize, (K, V), P>,
+    it: ordmap::ConsumingIter<u64, (K, V), P>,
 }
 
 impl<K, V, P> Iterator for ConsumingIter<K, V, P>
@@ -1305,6 +1304,24 @@ mod test {
         let map: IndexMap<i32, i32> = IndexMap::from(vec![(1, 11), (2, 22), (3, 33)]);
         assert_eq!(map.len(), 3);
         assert_eq!(map.get(&2), Some(&22));
+    }
+
+    #[test]
+    fn alter_preserves_order() {
+        let mut map = indexmap! {
+            "one" => 1,
+            "two" => 2,
+            "three" => 3
+        };
+
+        map = map.alter(|n| n.map(|n| n * 2), "two");
+        map = map.alter(|_| Some(4), "four");
+        map = map.alter(|_| None, "five");
+
+        assert_eq!(
+            map.into_iter().collect::<Vec<_>>(),
+            vec![("one", 1), ("two", 4), ("three", 3), ("four", 4),]
+        );
     }
 
     proptest! {
