@@ -1,0 +1,22 @@
+[package]
+name = "imbl-index"
+version = "0.1.0"
+edition = "2024"
+license = "MPL-2.0+"
+description = "Persistent IndexMap type for imbl"
+repository = "https://github.com/Dorumin/imbl-index"
+documentation = "https://docs.rs/imbl-index"
+homepage = "https://github.com/Dorumin/imbl-index"
+readme = "./README.md"
+
+[dependencies]
+imbl = "7"
+
+[dev-dependencies]
+proptest = "1.0"
+criterion = "0.7"
+rand = { version = "0.9", features = ["small_rng"] }
+
+[[bench]]
+name = "indexmap"
+harness = false
