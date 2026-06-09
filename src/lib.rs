@@ -349,7 +349,7 @@ where
             None => {
                 let seq = self.next_index;
                 self.next_index += 1;
-                self.order.insert(seq, (k.clone(), v.clone()));
+                self.order.insert(seq, (k.clone(), v));
                 self.index.insert(k, seq);
                 None
             }
@@ -389,7 +389,7 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn update_with<F>(self, k: K, v: V, f: F) -> Self
+    pub fn update_with<F>(&self, k: K, v: V, f: F) -> Self
     where
         F: FnOnce(V, V) -> V,
     {
@@ -405,16 +405,16 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn update_with_key<F>(self, k: K, v: V, f: F) -> Self
+    pub fn update_with_key<F>(&self, k: K, v: V, f: F) -> Self
     where
         F: FnOnce(&K, V, V) -> V,
     {
-        match self.extract_with_key(&k) {
-            None => self.update(k, v),
-            Some((_, v2, m)) => {
-                let out_v = f(&k, v2, v);
-                m.update(k, out_v)
-            }
+        if let Some(old_v) = self.get(&k).cloned() {
+            let new_v = f(&k, old_v, v);
+
+            self.update(k, new_v)
+        } else {
+            self.update(k, v)
         }
     }
 
@@ -424,16 +424,19 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn update_lookup_with_key<F>(self, k: K, v: V, f: F) -> (Option<V>, Self)
+    pub fn update_lookup_with_key<F>(&self, k: K, v: V, f: F) -> (Option<V>, Self)
     where
         F: FnOnce(&K, &V, V) -> V,
     {
-        match self.extract_with_key(&k) {
-            None => (None, self.update(k, v)),
-            Some((_, v2, m)) => {
-                let out_v = f(&k, &v2, v);
-                (Some(v2), m.update(k, out_v))
-            }
+        if let Some(old_v) = self.get(&k).cloned() {
+            let new_v = f(&k, &old_v, v);
+            let new_map = self.update(k, new_v);
+
+            (Some(old_v), new_map)
+        } else {
+            let new_map = self.update(k, v);
+
+            (None, new_map)
         }
     }
 
@@ -1036,9 +1039,7 @@ where
     pub fn insert(self, value: V) -> &'a mut V {
         let seq = self.map.next_index;
         self.map.next_index += 1;
-        self.map
-            .order
-            .insert(seq, (self.key.clone(), value.clone()));
+        self.map.order.insert(seq, (self.key.clone(), value));
         self.map.index.insert(self.key, seq);
         self.map.order.get_mut(&seq).map(|(_, v)| v).unwrap()
     }
@@ -1321,6 +1322,28 @@ mod test {
         assert_eq!(
             map.into_iter().collect::<Vec<_>>(),
             vec![("one", 1), ("two", 4), ("three", 3), ("four", 4),]
+        );
+    }
+
+    #[test]
+    fn update_preserves_order() {
+        let map = indexmap! {
+            "one" => 1,
+            "two" => 2,
+            "three" => 3
+        };
+
+        let map = map
+            .update("two", 4)
+            .update_with("two", 4, |old_n, n| old_n * n)
+            .update_with_key("two", 16, |_key, old_n, n| old_n * n);
+
+        let (old_v, map) = map.update_lookup_with_key("two", 256, |_key, old_n, n| old_n * n);
+
+        assert_eq!(old_v, Some(256));
+        assert_eq!(
+            map.into_iter().collect::<Vec<_>>(),
+            vec![("one", 1), ("two", 256 * 256), ("three", 3)]
         );
     }
 
