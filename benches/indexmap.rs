@@ -10,7 +10,7 @@ use imbl_index::IndexMap;
 
 // ── Test data generation ─────────────────────────────────────────
 
-trait TestData: Clone + Hash + Eq + 'static {
+trait TestData: Clone + Hash + Eq + std::fmt::Debug + 'static {
     fn generate(n: usize) -> Vec<Self>;
 }
 
@@ -32,7 +32,7 @@ impl TestData for String {
 
 // ── BigType: 4 KB newtype ──────────────────────────────────────────
 
-#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Debug)]
 struct BigType([u8; 4096]);
 
 impl TestData for BigType {
@@ -65,6 +65,12 @@ fn reorder<K: Clone>(keys: &[K]) -> Vec<K> {
     order
 }
 
+fn reorder_in_place<V>(values: &mut [V], rng_seed: u64) {
+    use rand::prelude::*;
+    let mut rng = SmallRng::seed_from_u64(rng_seed);
+    values.shuffle(&mut rng);
+}
+
 // ── Benchmark trait ──────────────────────────────────────────────
 
 trait BenchMap<K, V>: Clone + FromIterator<(K, V)>
@@ -85,6 +91,18 @@ where
     fn remove_clone(&self, k: &K) -> Self;
     fn get(&self, k: &K) -> Option<&V>;
     fn iter(&self) -> Self::Iter<'_>;
+
+    fn has_expensive_clone() -> bool {
+        false
+    }
+
+    fn keys_cloned<'a>(&'a self) -> impl Iterator<Item = K>
+    where
+        K: 'a,
+        V: 'a,
+    {
+        self.iter().map(|(k, _)| k.clone())
+    }
 }
 
 // ── imbl::HashMap ────────────────────────────────────────────────
@@ -160,6 +178,10 @@ where
     }
     fn iter(&self) -> Self::Iter<'_> {
         self.iter()
+    }
+
+    fn has_expensive_clone() -> bool {
+        true
     }
 }
 
@@ -242,6 +264,42 @@ where
 }
 
 // ── Generic benchmark functions ──────────────────────────────────
+
+fn prepare_map<M, K, V>(size: usize, rng_seed: u64) -> M
+where
+    M: BenchMap<K, V>,
+    K: TestData,
+    V: TestData,
+{
+    let mut keys = K::generate(size);
+    let mut values = V::generate(size);
+
+    // Hopefully reordering same-sized arrays with the same rng_seed produces the same results!
+    // A valid question would be whether we even want to. We might even want them to be separate
+    reorder_in_place(&mut keys, rng_seed);
+    reorder_in_place(&mut values, rng_seed);
+
+    keys.into_iter().zip(values).collect()
+}
+
+fn partially_shuffle_map<M, K, V>(map: &mut M, shuffle_count: usize)
+where
+    M: BenchMap<K, V>,
+    K: TestData,
+    V: TestData,
+{
+    use rand::prelude::*;
+
+    let allkeys: Vec<_> = map.keys_cloned().collect();
+
+    let mut rng = SmallRng::seed_from_u64(1);
+    let sampled_keys = allkeys.choose_multiple(&mut rng, shuffle_count).cloned();
+
+    for key in sampled_keys {
+        let v = map.remove(&key).unwrap();
+        map.insert(key, v);
+    }
+}
 
 fn bench_lookup<M, K, V>(b: &mut Bencher, size: usize)
 where
@@ -356,54 +414,132 @@ where
     K: TestData,
     V: TestData,
 {
+    use rand::prelude::*;
+
     let mut group = c.benchmark_group(group_name);
 
     group.sample_size(100);
     group.measurement_time(std::time::Duration::from_secs(10));
     group.warm_up_time(std::time::Duration::from_secs(3));
 
-    let insert_sizes = if std::env::var("BENCH_STD").is_ok() {
+    // Size for tests that repeatedly clone when constructing the map
+    let clone_sizes = if M::has_expensive_clone() {
         &[100, 1000][..]
     } else {
         &[100, 1000, 5000, 10000][..]
     };
 
-    let remove_sizes = if std::env::var("BENCH_STD").is_ok() {
-        &[100, 1000][..]
-    } else {
-        &[100, 1000, 5000, 10000][..]
-    };
+    // Size for tests that build the map once per iter
+    let mut_sizes = &[100, 1000, 5000, 10000][..];
 
-    for size in insert_sizes {
+    // Size for tests that only build the map once and do one constant-time operation on it
+    let mut_one_sizes = &[100, 1000, 5000, 10000, 50000, 100000][..];
+
+    for size in mut_sizes {
         group.bench_function(format!("lookup_{}", size), |b| {
-            bench_lookup::<M, K, V>(b, *size)
+            bench_lookup::<M, K, V>(b, *size);
         });
     }
 
-    for size in insert_sizes {
+    for size in mut_one_sizes {
+        // Lazy init the big maps
+        let mut m: Option<M> = None;
+        let mut k: Option<Vec<_>> = None;
+
+        // Reuse rng between iters to lookup different keys
+        let mut rng = SmallRng::seed_from_u64(2);
+
+        group.bench_function(format!("lookup_one_{}", size), |b| {
+            let map = m.get_or_insert_with(|| prepare_map(*size, 1));
+            let keys = k.get_or_insert_with(|| map.keys_cloned().collect());
+
+            partially_shuffle_map(map, 100);
+
+            // Not sure if this should be in .iter(); it's O(1) anyway
+            let k = keys.choose(&mut rng).unwrap();
+
+            b.iter(|| {
+                black_box(map.get(k));
+            });
+        });
+    }
+
+    for size in clone_sizes {
         group.bench_function(format!("insert_{}", size), |b| {
-            bench_insert::<M, K, V>(b, *size)
+            bench_insert::<M, K, V>(b, *size);
         });
     }
 
-    for size in insert_sizes {
+    for size in clone_sizes {
+        let mut m: Option<M> = None;
+        let mut k: Option<Vec<_>> = None;
+
+        let mut rng = SmallRng::seed_from_u64(2);
+
+        group.bench_function(format!("insert_one_{}", size), |b| {
+            let map = m.get_or_insert_with(|| prepare_map(*size, 1));
+            let keys = k.get_or_insert_with(|| map.keys_cloned().collect());
+
+            partially_shuffle_map(map, 100);
+
+            b.iter_batched(
+                || {
+                    let mut cloned = map.clone();
+                    let k = keys.choose(&mut rng).unwrap().clone();
+                    let v = cloned.remove(&k).unwrap();
+
+                    (cloned, k, v)
+                },
+                |(map, k, v)| {
+                    map.insert_clone(k, v);
+                },
+                criterion::BatchSize::SmallInput,
+            );
+        });
+    }
+
+    for size in mut_sizes {
         group.bench_function(format!("insert_mut_{}", size), |b| {
-            bench_insert_mut::<M, K, V>(b, *size)
+            bench_insert_mut::<M, K, V>(b, *size);
         });
     }
 
-    for size in remove_sizes {
+    for size in mut_one_sizes {
+        let mut m: Option<M> = None;
+        let mut k: Option<Vec<_>> = None;
+
+        let mut rng = SmallRng::seed_from_u64(2);
+
+        group.bench_function(format!("reinsert_mut_one_{}", size), |b| {
+            let map = m.get_or_insert_with(|| prepare_map(*size, 1));
+            let keys = k.get_or_insert_with(|| map.keys_cloned().collect());
+
+            partially_shuffle_map(map, 100);
+
+            b.iter(|| {
+                let k = keys.choose(&mut rng).unwrap().clone();
+                let v = map.remove(&k).unwrap();
+
+                black_box(map.insert(k, v));
+            });
+        });
+    }
+
+    for size in clone_sizes {
         group.bench_function(format!("remove_{}", size), |b| {
-            bench_remove::<M, K, V>(b, *size)
-        });
-        group.bench_function(format!("remove_mut_{}", size), |b| {
-            bench_remove_mut::<M, K, V>(b, *size)
+            bench_remove::<M, K, V>(b, *size);
         });
     }
 
-    for size in insert_sizes {
+    for size in mut_sizes {
+        group.bench_function(format!("remove_mut_{}", size), |b| {
+            bench_remove_mut::<M, K, V>(b, *size);
+        });
+    }
+
+    for size in mut_sizes {
         group.bench_function(format!("iter_{}", size), |b| {
-            bench_iter::<M, K, V>(b, *size)
+            bench_iter::<M, K, V>(b, *size);
         });
     }
 
