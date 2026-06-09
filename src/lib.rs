@@ -25,8 +25,8 @@ use std::collections::hash_map::RandomState;
 use std::fmt::{Debug, Error, Formatter};
 use std::hash::{BuildHasher, Hash};
 use std::iter::{FromIterator, FusedIterator, Sum};
-use std::ops::Add;
 use std::ops::Index;
+use std::ops::{Add, IndexMut};
 
 use imbl::GenericHashMap;
 use imbl::ordmap::{self, GenericOrdMap};
@@ -105,6 +105,21 @@ impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
         GenericIndexMap {
             index: GenericHashMap::with_hasher(hasher),
             order: GenericOrdMap::new(),
+            next_index: 0,
+        }
+    }
+
+    /// Construct an empty index map using the same hasher as the
+    /// current index map.
+    pub fn new_from<K1, V1>(&self) -> GenericIndexMap<K1, V1, S, P>
+    where
+        K1: Hash + Eq + Clone,
+        V1: Clone,
+        S: Clone,
+    {
+        GenericIndexMap {
+            index: self.index.new_from(),
+            order: Default::default(),
             next_index: 0,
         }
     }
@@ -233,7 +248,7 @@ impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
 
 impl<K, V, S, P> GenericIndexMap<K, V, S, P>
 where
-    K: Hash + Eq,
+    K: Hash + Eq + Clone,
     S: BuildHasher + Clone,
     P: SharedPointerKind,
 {
@@ -241,18 +256,27 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn get(&self, key: &K) -> Option<&V> {
-        let seq = self.index.get(key)?;
-        self.order.get(seq).map(|(_, v)| v)
+    pub fn get<BK>(&self, key: &BK) -> Option<&V>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
+        self.get_key_value(key).map(|(_, v)| v)
     }
 
     /// Get the key/value pair for a key from an index map.
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn get_key_value(&self, key: &K) -> Option<(&K, &V)> {
+    pub fn get_key_value<BK>(&self, key: &BK) -> Option<(&K, &V)>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
         let seq = self.index.get(key)?;
-        self.order.get(seq).map(|(k, v)| (k, v))
+        let (k, v) = self.order.get(seq).expect("index is not corrupted");
+
+        Some((k, v))
     }
 
     /// Test for the presence of a key in an index map.
@@ -260,7 +284,11 @@ where
     /// Time: O(log n)
     #[inline]
     #[must_use]
-    pub fn contains_key(&self, k: &K) -> bool {
+    pub fn contains_key<BK>(&self, k: &BK) -> bool
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
         self.get(k).is_some()
     }
 
@@ -335,6 +363,42 @@ where
     S: BuildHasher + Clone,
     P: SharedPointerKind,
 {
+    /// Construct an index map with a single mapping.
+    #[inline]
+    #[must_use]
+    pub fn unit(k: K, v: V) -> GenericHashMap<K, V, RandomState, P> {
+        GenericHashMap::new().update(k, v)
+    }
+
+    /// Get a mutable reference to the value for a key from an index
+    /// map.
+    ///
+    /// Time: O(log n)
+    #[must_use]
+    pub fn get_mut<BK>(&mut self, key: &BK) -> Option<&mut V>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
+        self.get_key_value_mut(key).map(|(_, v)| v)
+    }
+
+    /// Get the key/value pair for a key from an index map, returning a mutable reference to the value.
+    ///
+    /// Time: O(log n)
+    #[must_use]
+    pub fn get_key_value_mut<BK>(&mut self, key: &BK) -> Option<(&K, &mut V)>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
+        let seq = self.index.get(key)?;
+
+        let (k, v) = self.order.get_mut(seq).expect("index is not corrupted");
+
+        Some((k, v))
+    }
+
     /// Insert a key/value mapping into an index map.
     ///
     /// If the map already has a mapping for the given key, the
@@ -344,25 +408,47 @@ where
     /// Time: O(log n)
     pub fn insert(&mut self, k: K, v: V) -> Option<V> {
         let old_seq = self.index.get(&k).copied();
-        match old_seq {
-            Some(seq) => self.order.insert(seq, (k, v)).map(|(_, old_v)| old_v),
-            None => {
-                let seq = self.next_index;
-                self.next_index += 1;
-                self.order.insert(seq, (k.clone(), v));
-                self.index.insert(k, seq);
-                None
-            }
+
+        if let Some(seq) = old_seq {
+            let (_, v) = self
+                .order
+                .insert(seq, (k, v))
+                .expect("index is not corrupted");
+
+            Some(v)
+        } else {
+            let seq = self.next_index;
+            self.next_index += 1;
+            self.order.insert(seq, (k.clone(), v));
+            self.index.insert(k, seq);
+            None
         }
     }
 
     /// Remove a key/value pair from an index map, if it exists.
     ///
     /// Time: O(log n)
-    pub fn remove(&mut self, k: &K) -> Option<V> {
+    pub fn remove<BK>(&mut self, k: &BK) -> Option<V>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
+        self.remove_with_key(k).map(|(_, v)| v)
+    }
+
+    /// Remove a key/value pair from a map, if it exists, and return
+    /// the removed key and value.
+    ///
+    /// Time: O(log n)
+    pub fn remove_with_key<BK>(&mut self, k: &BK) -> Option<(K, V)>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
         let seq = self.index.remove(k)?;
-        let (_, v) = self.order.remove(&seq)?;
-        Some(v)
+        let (k, v) = self.order.remove(&seq)?;
+
+        Some((k, v))
     }
 
     /// Construct a new index map by inserting a key/value mapping
@@ -468,7 +554,11 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn without(&self, k: &K) -> Self {
+    pub fn without<BK>(&self, k: &BK) -> Self
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
         self.extract(k)
             .map(|(_, m)| m)
             .unwrap_or_else(|| self.clone())
@@ -479,7 +569,11 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn extract(&self, k: &K) -> Option<(V, Self)> {
+    pub fn extract<BK>(&self, k: &BK) -> Option<(V, Self)>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
         self.extract_with_key(k).map(|(_, v, m)| (v, m))
     }
 
@@ -488,11 +582,36 @@ where
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn extract_with_key(&self, k: &K) -> Option<(K, V, Self)> {
+    pub fn extract_with_key<BK>(&self, k: &BK) -> Option<(K, V, Self)>
+    where
+        BK: Hash + Eq + ?Sized,
+        K: Borrow<BK>,
+    {
         let mut out = self.clone();
         let seq = out.index.remove(k)?;
         let (old_k, old_v) = out.order.remove(&seq)?;
         Some((old_k, old_v, out))
+    }
+
+    /// Filter out values from a map which don't satisfy a predicate.
+    ///
+    /// This is slightly more efficient than filtering using an
+    /// iterator, in that it doesn't need to rehash the retained
+    /// values, but it still needs to reconstruct the entire tree
+    /// structure of the map.
+    ///
+    /// Time: O(n log n)
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&K, &V) -> bool,
+    {
+        let clone = self.clone();
+
+        for (key, value) in clone.iter() {
+            if !f(key, value) {
+                self.remove(key);
+            }
+        }
     }
 
     /// Construct the union of two maps, keeping the values in the
@@ -568,6 +687,211 @@ where
             self.insert(k, v);
         }
         self
+    }
+
+    /// Construct the union of a sequence of maps, selecting the value
+    /// of the leftmost when a key appears in more than one map.
+    ///
+    /// Time: O(n log n)
+    pub fn unions<I>(i: I) -> Self
+    where
+        S: Default,
+        I: IntoIterator<Item = Self>,
+    {
+        i.into_iter().fold(Self::default(), Self::union)
+    }
+
+    /// Construct the union of a sequence of maps, using a function to
+    /// decide what to do with the value when a key is in more than
+    /// one map.
+    ///
+    /// The function is called when a value exists in multiple maps,
+    /// and receives the value from the current map as its first
+    /// argument, and the value from the next map as the second. It
+    /// should return the value to be inserted in the resulting map.
+    ///
+    /// Time: O(n log n)
+    #[must_use]
+    pub fn unions_with<I, F>(i: I, f: F) -> Self
+    where
+        S: Default,
+        I: IntoIterator<Item = Self>,
+        F: Fn(V, V) -> V,
+    {
+        i.into_iter()
+            .fold(Self::default(), |a, b| a.union_with(b, &f))
+    }
+
+    /// Construct the union of a sequence of maps, using a function to
+    /// decide what to do with the value when a key is in more than
+    /// one map.
+    ///
+    /// The function is called when a value exists in multiple maps,
+    /// and receives a reference to the key as its first argument, the
+    /// value from the current map as the second argument, and the
+    /// value from the next map as the third argument. It should
+    /// return the value to be inserted in the resulting map.
+    ///
+    /// Time: O(n log n)
+    #[must_use]
+    pub fn unions_with_key<I, F>(i: I, f: F) -> Self
+    where
+        S: Default,
+        I: IntoIterator<Item = Self>,
+        F: Fn(&K, V, V) -> V,
+    {
+        i.into_iter()
+            .fold(Self::default(), |a, b| a.union_with_key(b, &f))
+    }
+
+    /// Construct the symmetric difference between two maps by discarding keys
+    /// which occur in both maps.
+    ///
+    /// Time: O(n log n)
+    #[inline]
+    #[must_use]
+    pub fn symmetric_difference(self, other: Self) -> Self {
+        self.symmetric_difference_with_key(other, |_, _, _| None)
+    }
+
+    /// Construct the symmetric difference between two maps by using a function
+    /// to decide what to do if a key occurs in both.
+    ///
+    /// Time: O(n log n)
+    #[inline]
+    #[must_use]
+    pub fn symmetric_difference_with<F>(self, other: Self, mut f: F) -> Self
+    where
+        F: FnMut(V, V) -> Option<V>,
+    {
+        self.symmetric_difference_with_key(other, |_, a, b| f(a, b))
+    }
+
+    /// Construct the symmetric difference between two maps by using a function
+    /// to decide what to do if a key occurs in both. The function
+    /// receives the key as well as both values.
+    ///
+    /// Time: O(n log n)
+    #[must_use]
+    pub fn symmetric_difference_with_key<F>(mut self, other: Self, mut f: F) -> Self
+    where
+        F: FnMut(&K, V, V) -> Option<V>,
+    {
+        let mut out = self.new_from();
+
+        for (key, right_value) in other {
+            match self.remove(&key) {
+                None => {
+                    out.insert(key, right_value);
+                }
+                Some(left_value) => {
+                    if let Some(final_value) = f(&key, left_value, right_value) {
+                        out.insert(key, final_value);
+                    }
+                }
+            }
+        }
+
+        out.union(self)
+    }
+
+    /// Construct the relative complement between two maps by discarding keys
+    /// which occur in `other`.
+    ///
+    /// Time: O(m log n) where m is the size of the other map
+    #[inline]
+    #[must_use]
+    pub fn relative_complement(mut self, other: Self) -> Self {
+        for (key, _) in other {
+            let _ = self.remove(&key);
+        }
+        self
+    }
+
+    /// Construct the intersection of two maps, keeping the values
+    /// from the current map.
+    ///
+    /// Time: O(n log n)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[macro_use] extern crate imbl;
+    /// # use imbl::hashmap::HashMap;
+    /// let map1 = hashmap!{1 => 1, 2 => 2};
+    /// let map2 = hashmap!{2 => 3, 3 => 4};
+    /// let expected = hashmap!{2 => 2};
+    /// assert_eq!(expected, map1.intersection(map2));
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn intersection(self, other: Self) -> Self {
+        self.intersection_with_key(other, |_, v, _| v)
+    }
+
+    /// Construct the intersection of two maps, calling a function
+    /// with both values for each key and using the result as the
+    /// value for the key.
+    ///
+    /// Time: O(n log n)
+    #[inline]
+    #[must_use]
+    pub fn intersection_with<B, C, F>(
+        self,
+        other: GenericIndexMap<K, B, S, P>,
+        mut f: F,
+    ) -> GenericIndexMap<K, C, S, P>
+    where
+        B: Clone,
+        C: Clone,
+        F: FnMut(V, B) -> C,
+    {
+        self.intersection_with_key(other, |_, v1, v2| f(v1, v2))
+    }
+
+    /// Construct the intersection of two maps, calling a function
+    /// with the key and both values for each key and using the result
+    /// as the value for the key.
+    ///
+    /// Time: O(n log n)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[macro_use] extern crate imbl;
+    /// # use imbl::hashmap::HashMap;
+    /// let map1 = hashmap!{1 => 1, 2 => 2};
+    /// let map2 = hashmap!{2 => 3, 3 => 4};
+    /// let expected = hashmap!{2 => 5};
+    /// assert_eq!(expected, map1.intersection_with_key(
+    ///     map2,
+    ///     |key, left, right| left + right
+    /// ));
+    /// ```
+    #[must_use]
+    pub fn intersection_with_key<B, C, F>(
+        mut self,
+        other: GenericIndexMap<K, B, S, P>,
+        mut f: F,
+    ) -> GenericIndexMap<K, C, S, P>
+    where
+        B: Clone,
+        C: Clone,
+        F: FnMut(&K, V, B) -> C,
+    {
+        let mut out = self.new_from();
+        for (key, right_value) in other {
+            match self.remove(&key) {
+                None => (),
+                Some(left_value) => {
+                    let result = f(&key, left_value, right_value);
+
+                    out.insert(key, result);
+                }
+            }
+        }
+
+        out
     }
 
     /// Get the [`Entry`] for a key in the map for in-place manipulation.
@@ -701,17 +1025,33 @@ where
 
 // Index trait
 
-impl<K, V, S, P> Index<&K> for GenericIndexMap<K, V, S, P>
+impl<BK, K, V, S, P> Index<&BK> for GenericIndexMap<K, V, S, P>
 where
-    K: Hash + Eq,
+    BK: Hash + Eq + ?Sized,
+    K: Hash + Eq + Clone + Borrow<BK>,
     S: BuildHasher + Clone,
     P: SharedPointerKind,
 {
     type Output = V;
 
-    fn index(&self, key: &K) -> &V {
-        self.get(key)
-            .expect("GenericIndexMap::index: key not found")
+    fn index(&self, key: &BK) -> &Self::Output {
+        self.get(key).expect("IndexMap::index: key not found")
+    }
+}
+
+impl<BK, K, V, S, P> IndexMut<&BK> for GenericIndexMap<K, V, S, P>
+where
+    BK: Hash + Eq + ?Sized,
+    K: Hash + Eq + Clone + Borrow<BK>,
+    V: Clone,
+    S: BuildHasher + Clone,
+    P: SharedPointerKind,
+{
+    fn index_mut(&mut self, key: &BK) -> &mut Self::Output {
+        match self.get_mut(key) {
+            None => panic!("HashMap::index_mut: invalid key"),
+            Some(value) => value,
+        }
     }
 }
 
@@ -961,16 +1301,8 @@ where
 
     /// Remove this entry from the map and return the removed mapping.
     pub fn remove_entry(self) -> (K, V) {
-        let seq = self
-            .map
-            .index
-            .remove(&self.key)
-            .expect("GenericIndexMap::OccupiedEntry::remove_entry: key has vanished!");
-        let (k, v) = self
-            .map
-            .order
-            .remove(&seq)
-            .expect("GenericIndexMap::OccupiedEntry::remove_entry: seq has vanished!");
+        let seq = self.map.index.remove(&self.key).unwrap();
+        let (k, v) = self.map.order.remove(&seq).unwrap();
         (k, v)
     }
 
@@ -1345,6 +1677,22 @@ mod test {
             map.into_iter().collect::<Vec<_>>(),
             vec![("one", 1), ("two", 256 * 256), ("three", 3)]
         );
+    }
+
+    #[test]
+    fn borrows() {
+        let mut map = indexmap! {};
+
+        map.insert(String::from("a"), 1);
+        map.insert(String::from("b"), 2);
+        map.insert(String::from("c"), 3);
+
+        assert_eq!(map.get("a"), Some(&1));
+        assert_eq!(map["b"], 2);
+
+        map["c"] = 67;
+
+        assert_eq!(map["c"], 67);
     }
 
     proptest! {
