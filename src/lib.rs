@@ -393,7 +393,6 @@ where
         K: Borrow<BK>,
     {
         let seq = self.index.get(key)?;
-
         let (k, v) = self.order.get_mut(seq).expect("index is not corrupted");
 
         Some((k, v))
@@ -446,7 +445,7 @@ where
         K: Borrow<BK>,
     {
         let seq = self.index.remove(k)?;
-        let (k, v) = self.order.remove(&seq)?;
+        let (k, v) = self.order.remove(&seq).expect("index is not corrupted");
 
         Some((k, v))
     }
@@ -589,7 +588,8 @@ where
     {
         let mut out = self.clone();
         let seq = out.index.remove(k)?;
-        let (old_k, old_v) = out.order.remove(&seq)?;
+        let (old_k, old_v) = out.order.remove(&seq).expect("index is not corrupted");
+
         Some((old_k, old_v, out))
     }
 
