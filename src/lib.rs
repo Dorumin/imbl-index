@@ -111,6 +111,7 @@ impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
 
     /// Construct an empty index map using the same hasher as the
     /// current index map.
+    #[must_use]
     pub fn new_from<K1, V1>(&self) -> GenericIndexMap<K1, V1, S, P>
     where
         K1: Hash + Eq + Clone,
@@ -225,7 +226,7 @@ impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn front(&self) -> Option<(&K, &V)> {
+    pub fn first(&self) -> Option<(&K, &V)> {
         self.order.get_min().map(|(_, (k, v))| (k, v))
     }
 
@@ -233,7 +234,7 @@ impl<K, V, S, P: SharedPointerKind> GenericIndexMap<K, V, S, P> {
     ///
     /// Time: O(log n)
     #[must_use]
-    pub fn back(&self) -> Option<(&K, &V)> {
+    pub fn last(&self) -> Option<(&K, &V)> {
         self.order.get_max().map(|(_, (k, v))| (k, v))
     }
 
@@ -693,6 +694,7 @@ where
     /// of the leftmost when a key appears in more than one map.
     ///
     /// Time: O(n log n)
+    #[must_use]
     pub fn unions<I>(i: I) -> Self
     where
         S: Default,
@@ -1618,8 +1620,8 @@ mod test {
     #[test]
     fn front_and_back() {
         let map = indexmap! { 1 => 11, 2 => 22, 3 => 33 };
-        assert_eq!(map.front(), Some((&1, &11)));
-        assert_eq!(map.back(), Some((&3, &33)));
+        assert_eq!(map.first(), Some((&1, &11)));
+        assert_eq!(map.last(), Some((&3, &33)));
     }
 
     #[test]
@@ -1627,8 +1629,8 @@ mod test {
         let map = IndexMap::<i32, i32>::new();
         assert!(map.is_empty());
         assert_eq!(map.len(), 0);
-        assert_eq!(map.front(), None);
-        assert_eq!(map.back(), None);
+        assert_eq!(map.first(), None);
+        assert_eq!(map.last(), None);
         assert_eq!(map.get(&1), None);
     }
 
@@ -1636,7 +1638,9 @@ mod test {
     fn from_vec() {
         let map: IndexMap<i32, i32> = IndexMap::from(vec![(1, 11), (2, 22), (3, 33)]);
         assert_eq!(map.len(), 3);
+        assert_eq!(map.first(), Some((&1, &11)));
         assert_eq!(map.get(&2), Some(&22));
+        assert_eq!(map.last(), Some((&3, &33)));
     }
 
     #[test]

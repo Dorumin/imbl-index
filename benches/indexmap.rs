@@ -1,6 +1,7 @@
 use criterion::{Bencher, Criterion, criterion_group, criterion_main};
 use imbl::hashmap::HashMap as ImHashMap;
 use imbl::ordmap::OrdMap as ImOrdMap;
+use indexmap::IndexMap as CrateIndexMap;
 use std::collections::HashMap as StdHashMap;
 use std::hash::Hash;
 use std::hint::black_box;
@@ -11,22 +12,29 @@ use imbl_index::IndexMap;
 // ── Test data generation ─────────────────────────────────────────
 
 trait TestData: Clone + Hash + Eq + std::fmt::Debug + 'static {
-    fn generate(n: usize) -> Vec<Self>;
-}
-
-impl TestData for i64 {
     fn generate(n: usize) -> Vec<Self> {
         use rand::prelude::*;
         let mut rng = SmallRng::seed_from_u64(42);
-        let mut v: Vec<i64> = (0..n as i64).collect();
+
+        let mut v: Vec<_> = (0..n).map(Self::generate_one).collect();
+
         v.shuffle(&mut rng);
+
         v
+    }
+
+    fn generate_one(i: usize) -> Self;
+}
+
+impl TestData for i64 {
+    fn generate_one(i: usize) -> Self {
+        i as i64
     }
 }
 
 impl TestData for String {
-    fn generate(n: usize) -> Vec<Self> {
-        (0..n).map(|i| format!("key_{:016x}", i)).collect()
+    fn generate_one(i: usize) -> Self {
+        format!("key_{:016x}", i)
     }
 }
 
@@ -36,24 +44,14 @@ impl TestData for String {
 struct BigType([u8; 4096]);
 
 impl TestData for BigType {
-    fn generate(n: usize) -> Vec<Self> {
-        use rand::prelude::*;
-        let mut rng = SmallRng::seed_from_u64(42);
-        let mut v: Vec<BigType> = (0..n)
-            .map(|n| {
-                let mut buf = [0; 4096];
-                let i = n % 4096;
-                let v = (n / 4096) as u8;
+    fn generate_one(i: usize) -> Self {
+        let mut buf = [0; 4096];
+        let i = i % 4096;
+        let v = (i / 4096) as u8;
 
-                buf[i] = v;
+        buf[i] = v;
 
-                BigType(buf)
-            })
-            .collect();
-
-        v.shuffle(&mut rng);
-
-        v
+        BigType(buf)
     }
 }
 
@@ -93,6 +91,10 @@ where
     fn iter(&self) -> Self::Iter<'_>;
 
     fn has_expensive_clone() -> bool {
+        false
+    }
+
+    fn has_expensive_remove() -> bool {
         false
     }
 
@@ -185,6 +187,58 @@ where
     }
 }
 
+impl<K, V> BenchMap<K, V> for CrateIndexMap<K, V>
+where
+    K: Clone + Hash + Eq,
+    V: Clone,
+{
+    type Iter<'a>
+        = indexmap::map::Iter<'a, K, V>
+    where
+        K: 'a,
+        V: 'a;
+
+    fn new() -> Self {
+        CrateIndexMap::new()
+    }
+
+    fn insert(&mut self, k: K, v: V) -> Option<V> {
+        self.insert(k, v)
+    }
+
+    fn insert_clone(&self, k: K, v: V) -> Self {
+        let mut m = self.clone();
+        m.insert(k, v);
+        m
+    }
+
+    fn remove(&mut self, k: &K) -> Option<V> {
+        self.shift_remove(k)
+    }
+
+    fn remove_clone(&self, k: &K) -> Self {
+        let mut m = self.clone();
+        m.shift_remove(k);
+        m
+    }
+
+    fn get(&self, k: &K) -> Option<&V> {
+        self.get(k)
+    }
+
+    fn iter(&self) -> Self::Iter<'_> {
+        self.iter()
+    }
+
+    fn has_expensive_clone() -> bool {
+        true
+    }
+
+    fn has_expensive_remove() -> bool {
+        true
+    }
+}
+
 // ── imbl::OrdMap ─────────────────────────────────────────────────
 
 impl<K, V> BenchMap<K, V> for ImOrdMap<K, V>
@@ -265,11 +319,12 @@ where
 
 // ── Generic benchmark functions ──────────────────────────────────
 
-fn prepare_map<M, K, V>(size: usize, rng_seed: u64) -> M
+fn prepare_map<M, K, V, F>(size: usize, rng_seed: u64, filter: F) -> M
 where
     M: BenchMap<K, V>,
     K: TestData,
     V: TestData,
+    F: FnMut(&(usize, (K, V))) -> bool,
 {
     let mut keys = K::generate(size);
     let mut values = V::generate(size);
@@ -279,7 +334,12 @@ where
     reorder_in_place(&mut keys, rng_seed);
     reorder_in_place(&mut values, rng_seed);
 
-    keys.into_iter().zip(values).collect()
+    keys.into_iter()
+        .zip(values)
+        .enumerate()
+        .filter(filter)
+        .map(|(_, kv)| kv)
+        .collect()
 }
 
 fn partially_shuffle_map<M, K, V>(map: &mut M, shuffle_count: usize)
@@ -419,8 +479,8 @@ where
     let mut group = c.benchmark_group(group_name);
 
     group.sample_size(100);
-    group.measurement_time(std::time::Duration::from_secs(10));
-    group.warm_up_time(std::time::Duration::from_secs(3));
+    group.measurement_time(std::time::Duration::from_secs(5));
+    group.warm_up_time(std::time::Duration::from_secs(2));
 
     // Size for tests that repeatedly clone when constructing the map
     let clone_sizes = if M::has_expensive_clone() {
@@ -432,8 +492,16 @@ where
     // Size for tests that build the map once per iter
     let mut_sizes = &[100, 1000, 5000, 10000][..];
 
+    // Size for tests that build the map once, but shift O(n) on removes
+    let mut_remove_sizes = if M::has_expensive_remove() {
+        &[100, 1000][..]
+    } else {
+        &[100, 1000, 5000, 10000][..]
+    };
+
     // Size for tests that only build the map once and do one constant-time operation on it
-    let mut_one_sizes = &[100, 1000, 5000, 10000, 50000, 100000][..];
+    // NOTE: CrateIndexMap probably needs a has_expensive_remove check for the reinsert test
+    let one_sizes = &[100, 1000, 5000, 10000, 50000, 100000][..];
 
     for size in mut_sizes {
         group.bench_function(format!("lookup_{}", size), |b| {
@@ -441,7 +509,7 @@ where
         });
     }
 
-    for size in mut_one_sizes {
+    for size in one_sizes {
         // Lazy init the big maps
         let mut m: Option<M> = None;
         let mut k: Option<Vec<_>> = None;
@@ -450,15 +518,12 @@ where
         let mut rng = SmallRng::seed_from_u64(2);
 
         group.bench_function(format!("lookup_one_{}", size), |b| {
-            let map = m.get_or_insert_with(|| prepare_map(*size, 1));
+            let map = m.get_or_insert_with(|| prepare_map(*size, 1, |_| true));
             let keys = k.get_or_insert_with(|| map.keys_cloned().collect());
 
-            partially_shuffle_map(map, 100);
-
-            // Not sure if this should be in .iter(); it's O(1) anyway
-            let k = keys.choose(&mut rng).unwrap();
-
             b.iter(|| {
+                let k = keys.choose(&mut rng).unwrap();
+
                 black_box(map.get(k));
             });
         });
@@ -472,29 +537,22 @@ where
 
     for size in clone_sizes {
         let mut m: Option<M> = None;
-        let mut k: Option<Vec<_>> = None;
 
         let mut rng = SmallRng::seed_from_u64(2);
 
         group.bench_function(format!("insert_one_{}", size), |b| {
-            let map = m.get_or_insert_with(|| prepare_map(*size, 1));
-            let keys = k.get_or_insert_with(|| map.keys_cloned().collect());
+            let map = m.get_or_insert_with(|| {
+                prepare_map(size * 2, 1, |(index, _)| index.is_multiple_of(2))
+            });
 
-            partially_shuffle_map(map, 100);
+            b.iter(|| {
+                let index = rng.random_range(0..*size) * 2;
 
-            b.iter_batched(
-                || {
-                    let mut cloned = map.clone();
-                    let k = keys.choose(&mut rng).unwrap().clone();
-                    let v = cloned.remove(&k).unwrap();
+                let k = K::generate_one(index);
+                let v = V::generate_one(index);
 
-                    (cloned, k, v)
-                },
-                |(map, k, v)| {
-                    map.insert_clone(k, v);
-                },
-                criterion::BatchSize::SmallInput,
-            );
+                black_box(map.insert_clone(k, v));
+            });
         });
     }
 
@@ -504,14 +562,14 @@ where
         });
     }
 
-    for size in mut_one_sizes {
+    for size in one_sizes {
         let mut m: Option<M> = None;
         let mut k: Option<Vec<_>> = None;
 
         let mut rng = SmallRng::seed_from_u64(2);
 
         group.bench_function(format!("reinsert_mut_one_{}", size), |b| {
-            let map = m.get_or_insert_with(|| prepare_map(*size, 1));
+            let map = m.get_or_insert_with(|| prepare_map(*size, 1, |_| true));
             let keys = k.get_or_insert_with(|| map.keys_cloned().collect());
 
             partially_shuffle_map(map, 100);
@@ -531,7 +589,7 @@ where
         });
     }
 
-    for size in mut_sizes {
+    for size in mut_remove_sizes {
         group.bench_function(format!("remove_mut_{}", size), |b| {
             bench_remove_mut::<M, K, V>(b, *size);
         });
@@ -549,7 +607,11 @@ where
 // ── IndexMap-specific benchmarks ─────────────────────────────────
 
 fn bench_indexmap_specific(c: &mut Criterion) {
-    let mut group = c.benchmark_group("indexmap_specific_i64");
+    use rand::prelude::*;
+
+    let mut group = c.benchmark_group("indexmap_im_specific_i64");
+
+    let mut rng = SmallRng::seed_from_u64(2);
 
     for size in &[100, 1000, 5000, 10000, 50000, 100000, 500000, 1000000] {
         let keys = i64::generate(*size);
@@ -558,22 +620,56 @@ fn bench_indexmap_specific(c: &mut Criterion) {
         group.bench_function(format!("get_index_{}", size), |b| {
             let m: IndexMap<i64, i64> = keys.clone().into_iter().zip(values.clone()).collect();
             b.iter(|| {
-                black_box(m.get_index(size / 2));
-            })
+                let lookup_index = rng.random_range(0..*size);
+
+                black_box(m.get_index(lookup_index));
+            });
         });
 
-        group.bench_function(format!("front_{}", size), |b| {
+        group.bench_function(format!("first_{}", size), |b| {
             let m: IndexMap<i64, i64> = keys.clone().into_iter().zip(values.clone()).collect();
             b.iter(|| {
-                black_box(m.front());
-            })
+                black_box(m.first());
+            });
         });
 
-        group.bench_function(format!("back_{}", size), |b| {
+        group.bench_function(format!("last_{}", size), |b| {
             let m: IndexMap<i64, i64> = keys.clone().into_iter().zip(values.clone()).collect();
             b.iter(|| {
-                black_box(m.back());
-            })
+                black_box(m.last());
+            });
+        });
+    }
+
+    group.finish();
+
+    let mut group = c.benchmark_group("indexmap_crate_specific_i64");
+
+    for size in &[100, 1000, 5000, 10000, 50000, 100000, 500000, 1000000] {
+        let keys = i64::generate(*size);
+        let values = i64::generate(*size);
+
+        group.bench_function(format!("get_index_{}", size), |b| {
+            let m: CrateIndexMap<i64, i64> = keys.clone().into_iter().zip(values.clone()).collect();
+            b.iter(|| {
+                let lookup_index = rng.random_range(0..*size);
+
+                black_box(m.get_index(lookup_index));
+            });
+        });
+
+        group.bench_function(format!("first_{}", size), |b| {
+            let m: CrateIndexMap<i64, i64> = keys.clone().into_iter().zip(values.clone()).collect();
+            b.iter(|| {
+                black_box(m.first());
+            });
+        });
+
+        group.bench_function(format!("last_{}", size), |b| {
+            let m: CrateIndexMap<i64, i64> = keys.clone().into_iter().zip(values.clone()).collect();
+            b.iter(|| {
+                black_box(m.last());
+            });
         });
     }
 
@@ -582,8 +678,12 @@ fn bench_indexmap_specific(c: &mut Criterion) {
 
 // ── i64 benchmarks ───────────────────────────────────────────────
 
+fn bench_indexmap_im_i64(c: &mut Criterion) {
+    bench_group::<IndexMap<i64, i64>, i64, i64>(c, "indexmap_im_i64");
+}
+
 fn bench_indexmap_i64(c: &mut Criterion) {
-    bench_group::<IndexMap<i64, i64>, i64, i64>(c, "indexmap_i64");
+    bench_group::<CrateIndexMap<i64, i64>, i64, i64>(c, "indexmap_crate_i64");
 }
 
 fn bench_hashmap_std_i64(c: &mut Criterion) {
@@ -600,8 +700,12 @@ fn bench_ordmap_i64(c: &mut Criterion) {
 
 // ── String benchmarks ────────────────────────────────────────────
 
+fn bench_indexmap_im_str(c: &mut Criterion) {
+    bench_group::<IndexMap<String, String>, String, String>(c, "indexmap_im_str");
+}
+
 fn bench_indexmap_str(c: &mut Criterion) {
-    bench_group::<IndexMap<String, String>, String, String>(c, "indexmap_str");
+    bench_group::<CrateIndexMap<String, String>, String, String>(c, "indexmap_crate_str");
 }
 
 fn bench_hashmap_std_str(c: &mut Criterion) {
@@ -618,8 +722,12 @@ fn bench_ordmap_str(c: &mut Criterion) {
 
 // ── BigType benchmarks ───────────────────────────────────────────
 
+fn bench_indexmap_im_big(c: &mut Criterion) {
+    bench_group::<IndexMap<BigType, BigType>, BigType, BigType>(c, "indexmap_im_big");
+}
+
 fn bench_indexmap_big(c: &mut Criterion) {
-    bench_group::<IndexMap<BigType, BigType>, BigType, BigType>(c, "indexmap_big");
+    bench_group::<CrateIndexMap<BigType, BigType>, BigType, BigType>(c, "indexmap_crate_big");
 }
 
 fn bench_hashmap_std_big(c: &mut Criterion) {
@@ -637,6 +745,7 @@ fn bench_ordmap_big(c: &mut Criterion) {
 // ── Entry point ──────────────────────────────────────────────────
 
 fn indexmap_benches(c: &mut Criterion) {
+    bench_indexmap_im_i64(c);
     bench_indexmap_i64(c);
 
     if std::env::var("BENCH_STD").is_ok() {
@@ -645,6 +754,7 @@ fn indexmap_benches(c: &mut Criterion) {
 
     bench_hashmap_im_i64(c);
     bench_ordmap_i64(c);
+    bench_indexmap_im_str(c);
     bench_indexmap_str(c);
 
     if std::env::var("BENCH_STD").is_ok() {
@@ -653,6 +763,7 @@ fn indexmap_benches(c: &mut Criterion) {
 
     bench_hashmap_im_str(c);
     bench_ordmap_str(c);
+    bench_indexmap_im_big(c);
     bench_indexmap_big(c);
 
     if std::env::var("BENCH_STD").is_ok() {

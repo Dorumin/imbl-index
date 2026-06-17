@@ -6,488 +6,614 @@ A persistent (through immutability and structural sharing) IndexMap type for the
 Expand raw data
 </summary>
 
-| bench                                   | time       |
-| --------------------------------------- | ---------- |
-| indexmap_i64/lookup_100                 | 2.2112 µs |
-| indexmap_i64/lookup_1000                | 35.510 µs |
-| indexmap_i64/lookup_5000                | 352.27 µs |
-| indexmap_i64/lookup_10000               | 843.33 µs |
-| indexmap_i64/lookup_one_100             | 23.071 ns  |
-| indexmap_i64/lookup_one_1000            | 33.585 ns  |
-| indexmap_i64/lookup_one_5000            | 41.951 ns  |
-| indexmap_i64/lookup_one_10000           | 44.634 ns  |
-| indexmap_i64/lookup_one_50000           | 52.835 ns  |
-| indexmap_i64/lookup_one_100000          | 54.579 ns  |
-| indexmap_i64/insert_100                 | 44.440 µs |
-| indexmap_i64/insert_1000                | 739.50 µs |
-| indexmap_i64/insert_5000                | 5.2003 ms  |
-| indexmap_i64/insert_10000               | 10.826 ms  |
-| indexmap_i64/insert_one_100             | 927.15 ns  |
-| indexmap_i64/insert_one_1000            | 1.5553 µs |
-| indexmap_i64/insert_one_5000            | 1.8646 µs |
-| indexmap_i64/insert_one_10000           | 1.9254 µs |
-| indexmap_i64/insert_mut_100             | 7.6923 µs |
-| indexmap_i64/insert_mut_1000            | 109.36 µs |
-| indexmap_i64/insert_mut_5000            | 559.90 µs |
-| indexmap_i64/insert_mut_10000           | 1.1089 ms  |
-| indexmap_i64/reinsert_mut_one_100       | 143.85 ns  |
-| indexmap_i64/reinsert_mut_one_1000      | 213.81 ns  |
-| indexmap_i64/reinsert_mut_one_5000      | 235.55 ns  |
-| indexmap_i64/reinsert_mut_one_10000     | 252.18 ns  |
-| indexmap_i64/reinsert_mut_one_50000     | 392.75 ns  |
-| indexmap_i64/reinsert_mut_one_100000    | 459.31 ns  |
-| indexmap_i64/remove_100                 | 39.084 µs |
-| indexmap_i64/remove_mut_100             | 6.5872 µs |
-| indexmap_i64/remove_1000                | 786.99 µs |
-| indexmap_i64/remove_mut_1000            | 95.437 µs |
-| indexmap_i64/remove_5000                | 5.3150 ms  |
-| indexmap_i64/remove_mut_5000            | 692.17 µs |
-| indexmap_i64/remove_10000               | 11.486 ms  |
-| indexmap_i64/remove_mut_10000           | 1.4346 ms  |
-| indexmap_i64/iter_100                   | 365.04 ns  |
-| indexmap_i64/iter_1000                  | 3.5792 µs |
-| indexmap_i64/iter_5000                  | 16.670 µs |
-| indexmap_i64/iter_10000                 | 33.166 µs |
-| hashmap_std_i64/lookup_100              | 1.1313 µs |
-| hashmap_std_i64/lookup_1000             | 11.145 µs |
-| hashmap_std_i64/lookup_one_100          | 11.213 ns  |
-| hashmap_std_i64/lookup_one_1000         | 11.154 ns  |
-| hashmap_std_i64/lookup_one_5000         | 11.152 ns  |
-| hashmap_std_i64/lookup_one_10000        | 11.140 ns  |
-| hashmap_std_i64/lookup_one_50000        | 11.161 ns  |
-| hashmap_std_i64/lookup_one_100000       | 11.214 ns  |
-| hashmap_std_i64/insert_100              | 8.0567 µs |
-| hashmap_std_i64/insert_1000             | 311.13 µs |
-| hashmap_std_i64/insert_one_100          | 233.15 ns  |
-| hashmap_std_i64/insert_one_1000         | 2.5858 µs |
-| hashmap_std_i64/insert_mut_100          | 3.2507 µs |
-| hashmap_std_i64/insert_mut_1000         | 39.664 µs |
-| hashmap_std_i64/reinsert_mut_one_100    | 38.032 ns  |
-| hashmap_std_i64/reinsert_mut_one_1000   | 32.707 ns  |
-| hashmap_std_i64/reinsert_mut_one_5000   | 36.044 ns  |
-| hashmap_std_i64/reinsert_mut_one_10000  | 38.546 ns  |
-| hashmap_std_i64/reinsert_mut_one_50000  | 53.511 ns  |
-| hashmap_std_i64/reinsert_mut_one_100000 | 61.325 ns  |
-| hashmap_std_i64/remove_100              | 7.5556 µs |
-| hashmap_std_i64/remove_mut_100          | 1.2943 µs |
-| hashmap_std_i64/remove_1000             | 952.30 µs |
-| hashmap_std_i64/remove_mut_1000         | 13.460 µs |
-| hashmap_std_i64/iter_100                | 72.652 ns  |
-| hashmap_std_i64/iter_1000               | 713.17 ns  |
-| hashmap_im_i64/lookup_100               | 1.2196 µs |
-| hashmap_im_i64/lookup_1000              | 12.789 µs |
-| hashmap_im_i64/lookup_5000              | 72.025 µs |
-| hashmap_im_i64/lookup_10000             | 158.11 µs |
-| hashmap_im_i64/lookup_one_100           | 12.904 ns  |
-| hashmap_im_i64/lookup_one_1000          | 13.386 ns  |
-| hashmap_im_i64/lookup_one_5000          | 13.632 ns  |
-| hashmap_im_i64/lookup_one_10000         | 13.768 ns  |
-| hashmap_im_i64/lookup_one_50000         | 13.874 ns  |
-| hashmap_im_i64/lookup_one_100000        | 14.326 ns  |
-| hashmap_im_i64/insert_100               | 25.141 µs |
-| hashmap_im_i64/insert_1000              | 380.23 µs |
-| hashmap_im_i64/insert_5000              | 2.9101 ms  |
-| hashmap_im_i64/insert_10000             | 6.0241 ms  |
-| hashmap_im_i64/insert_one_100           | 525.48 ns  |
-| hashmap_im_i64/insert_one_1000          | 915.39 ns  |
-| hashmap_im_i64/insert_one_5000          | 998.19 ns  |
-| hashmap_im_i64/insert_one_10000         | 992.82 ns  |
-| hashmap_im_i64/insert_mut_100           | 3.4218 µs |
-| hashmap_im_i64/insert_mut_1000          | 46.224 µs |
-| hashmap_im_i64/insert_mut_5000          | 193.98 µs |
-| hashmap_im_i64/insert_mut_10000         | 342.06 µs |
-| hashmap_im_i64/reinsert_mut_one_100     | 49.202 ns  |
-| hashmap_im_i64/reinsert_mut_one_1000    | 73.991 ns  |
-| hashmap_im_i64/reinsert_mut_one_5000    | 72.559 ns  |
-| hashmap_im_i64/reinsert_mut_one_10000   | 65.405 ns  |
-| hashmap_im_i64/reinsert_mut_one_50000   | 125.47 ns  |
-| hashmap_im_i64/reinsert_mut_one_100000  | 127.28 ns  |
-| hashmap_im_i64/remove_100               | 23.082 µs |
-| hashmap_im_i64/remove_mut_100           | 3.7433 µs |
-| hashmap_im_i64/remove_1000              | 457.65 µs |
-| hashmap_im_i64/remove_mut_1000          | 44.098 µs |
-| hashmap_im_i64/remove_5000              | 3.1237 ms  |
-| hashmap_im_i64/remove_mut_5000          | 244.54 µs |
-| hashmap_im_i64/remove_10000             | 6.5044 ms  |
-| hashmap_im_i64/remove_mut_10000         | 434.27 µs |
-| hashmap_im_i64/iter_100                 | 412.42 ns  |
-| hashmap_im_i64/iter_1000                | 4.9301 µs |
-| hashmap_im_i64/iter_5000                | 25.622 µs |
-| hashmap_im_i64/iter_10000               | 45.138 µs |
-| ordmap_i64/lookup_100                   | 1.0368 µs |
-| ordmap_i64/lookup_1000                  | 19.349 µs |
-| ordmap_i64/lookup_5000                  | 144.60 µs |
-| ordmap_i64/lookup_10000                 | 330.26 µs |
-| ordmap_i64/lookup_one_100               | 9.6837 ns  |
-| ordmap_i64/lookup_one_1000              | 17.228 ns  |
-| ordmap_i64/lookup_one_5000              | 23.092 ns  |
-| ordmap_i64/lookup_one_10000             | 26.401 ns  |
-| ordmap_i64/lookup_one_50000             | 33.863 ns  |
-| ordmap_i64/lookup_one_100000            | 37.796 ns  |
-| ordmap_i64/insert_100                   | 12.574 µs |
-| ordmap_i64/insert_1000                  | 252.28 µs |
-| ordmap_i64/insert_5000                  | 1.8961 ms  |
-| ordmap_i64/insert_10000                 | 4.2308 ms  |
-| ordmap_i64/insert_one_100               | 279.45 ns  |
-| ordmap_i64/insert_one_1000              | 520.44 ns  |
-| ordmap_i64/insert_one_5000              | 739.98 ns  |
-| ordmap_i64/insert_one_10000             | 875.45 ns  |
-| ordmap_i64/insert_mut_100               | 3.1733 µs |
-| ordmap_i64/insert_mut_1000              | 46.225 µs |
-| ordmap_i64/insert_mut_5000              | 331.52 µs |
-| ordmap_i64/insert_mut_10000             | 721.44 µs |
-| ordmap_i64/reinsert_mut_one_100         | 73.400 ns  |
-| ordmap_i64/reinsert_mut_one_1000        | 112.90 ns  |
-| ordmap_i64/reinsert_mut_one_5000        | 124.17 ns  |
-| ordmap_i64/reinsert_mut_one_10000       | 133.14 ns  |
-| ordmap_i64/reinsert_mut_one_50000       | 177.66 ns  |
-| ordmap_i64/reinsert_mut_one_100000      | 205.23 ns  |
-| ordmap_i64/remove_100                   | 13.661 µs |
-| ordmap_i64/remove_mut_100               | 2.9135 µs |
-| ordmap_i64/remove_1000                  | 262.40 µs |
-| ordmap_i64/remove_mut_1000              | 44.231 µs |
-| ordmap_i64/remove_5000                  | 1.8936 ms  |
-| ordmap_i64/remove_mut_5000              | 347.88 µs |
-| ordmap_i64/remove_10000                 | 4.3432 ms  |
-| ordmap_i64/remove_mut_10000             | 758.97 µs |
-| ordmap_i64/iter_100                     | 373.56 ns  |
-| ordmap_i64/iter_1000                    | 3.5718 µs |
-| ordmap_i64/iter_5000                    | 18.079 µs |
-| ordmap_i64/iter_10000                   | 35.971 µs |
-| indexmap_str/lookup_100                 | 3.0650 µs |
-| indexmap_str/lookup_1000                | 54.386 µs |
-| indexmap_str/lookup_5000                | 480.04 µs |
-| indexmap_str/lookup_10000               | 1.0883 ms  |
-| indexmap_str/lookup_one_100             | 30.792 ns  |
-| indexmap_str/lookup_one_1000            | 41.655 ns  |
-| indexmap_str/lookup_one_5000            | 48.936 ns  |
-| indexmap_str/lookup_one_10000           | 54.372 ns  |
-| indexmap_str/lookup_one_50000           | 59.495 ns  |
-| indexmap_str/lookup_one_100000          | 61.018 ns  |
-| indexmap_str/insert_100                 | 188.23 µs |
-| indexmap_str/insert_1000                | 2.3437 ms  |
-| indexmap_str/insert_5000                | 12.604 ms  |
-| indexmap_str/insert_10000               | 27.103 ms  |
-| indexmap_str/insert_one_100             | 2.5682 µs |
-| indexmap_str/insert_one_1000            | 3.8403 µs |
-| indexmap_str/insert_one_5000            | 3.7564 µs |
-| indexmap_str/insert_one_10000           | 4.0194 µs |
-| indexmap_str/insert_mut_100             | 24.468 µs |
-| indexmap_str/insert_mut_1000            | 279.54 µs |
-| indexmap_str/insert_mut_5000            | 1.4756 ms  |
-| indexmap_str/insert_mut_10000           | 3.0149 ms  |
-| indexmap_str/reinsert_mut_one_100       | 349.74 ns  |
-| indexmap_str/reinsert_mut_one_1000      | 452.70 ns  |
-| indexmap_str/reinsert_mut_one_5000      | 514.14 ns  |
-| indexmap_str/reinsert_mut_one_10000     | 687.49 ns  |
-| indexmap_str/reinsert_mut_one_50000     | 1.6078 µs |
-| indexmap_str/reinsert_mut_one_100000    | 1.7296 µs |
-| indexmap_str/remove_100                 | 169.35 µs |
-| indexmap_str/remove_mut_100             | 28.777 µs |
-| indexmap_str/remove_1000                | 1.9964 ms  |
-| indexmap_str/remove_mut_1000            | 322.06 µs |
-| indexmap_str/remove_5000                | 11.446 ms  |
-| indexmap_str/remove_mut_5000            | 1.9411 ms  |
-| indexmap_str/remove_10000               | 24.560 ms  |
-| indexmap_str/remove_mut_10000           | 4.1186 ms  |
-| indexmap_str/iter_100                   | 357.38 ns  |
-| indexmap_str/iter_1000                  | 3.2336 µs |
-| indexmap_str/iter_5000                  | 16.157 µs |
-| indexmap_str/iter_10000                 | 32.394 µs |
-| hashmap_std_str/lookup_100              | 2.0452 µs |
-| hashmap_std_str/lookup_1000             | 22.240 µs |
-| hashmap_std_str/lookup_one_100          | 20.653 ns  |
-| hashmap_std_str/lookup_one_1000         | 20.553 ns  |
-| hashmap_std_str/lookup_one_5000         | 20.935 ns  |
-| hashmap_std_str/lookup_one_10000        | 20.572 ns  |
-| hashmap_std_str/lookup_one_50000        | 21.068 ns  |
-| hashmap_std_str/lookup_one_100000       | 20.583 ns  |
-| hashmap_std_str/insert_100              | 379.87 µs |
-| hashmap_std_str/insert_1000             | 34.895 ms  |
-| hashmap_std_str/insert_one_100          | 9.4765 µs |
-| hashmap_std_str/insert_one_1000         | 102.70 µs |
-| hashmap_std_str/insert_mut_100          | 12.189 µs |
-| hashmap_std_str/insert_mut_1000         | 135.24 µs |
-| hashmap_std_str/reinsert_mut_one_100    | 97.538 ns  |
-| hashmap_std_str/reinsert_mut_one_1000   | 95.362 ns  |
-| hashmap_std_str/reinsert_mut_one_5000   | 116.50 ns  |
-| hashmap_std_str/reinsert_mut_one_10000  | 123.62 ns  |
-| hashmap_std_str/reinsert_mut_one_50000  | 166.37 ns  |
-| hashmap_std_str/reinsert_mut_one_100000 | 270.89 ns  |
-| hashmap_std_str/remove_100              | 371.27 µs |
-| hashmap_std_str/remove_mut_100          | 9.9188 µs |
-| hashmap_std_str/remove_1000             | 36.155 ms  |
-| hashmap_std_str/remove_mut_1000         | 99.737 µs |
-| hashmap_std_str/iter_100                | 95.154 ns  |
-| hashmap_std_str/iter_1000               | 958.07 ns  |
-| hashmap_im_str/lookup_100               | 2.1798 µs |
-| hashmap_im_str/lookup_1000              | 29.428 µs |
-| hashmap_im_str/lookup_5000              | 213.91 µs |
-| hashmap_im_str/lookup_10000             | 458.73 µs |
-| hashmap_im_str/lookup_one_100           | 21.164 ns  |
-| hashmap_im_str/lookup_one_1000          | 21.569 ns  |
-| hashmap_im_str/lookup_one_5000          | 22.403 ns  |
-| hashmap_im_str/lookup_one_10000         | 22.387 ns  |
-| hashmap_im_str/lookup_one_50000         | 23.220 ns  |
-| hashmap_im_str/lookup_one_100000        | 23.307 ns  |
-| hashmap_im_str/insert_100               | 121.57 µs |
-| hashmap_im_str/insert_1000              | 1.8211 ms  |
-| hashmap_im_str/insert_5000              | 9.0666 ms  |
-| hashmap_im_str/insert_10000             | 18.116 ms  |
-| hashmap_im_str/insert_one_100           | 1.4683 µs |
-| hashmap_im_str/insert_one_1000          | 2.7807 µs |
-| hashmap_im_str/insert_one_5000          | 2.1140 µs |
-| hashmap_im_str/insert_one_10000         | 2.4953 µs |
-| hashmap_im_str/insert_mut_100           | 12.138 µs |
-| hashmap_im_str/insert_mut_1000          | 145.59 µs |
-| hashmap_im_str/insert_mut_5000          | 720.02 µs |
-| hashmap_im_str/insert_mut_10000         | 1.4145 ms  |
-| hashmap_im_str/reinsert_mut_one_100     | 140.52 ns  |
-| hashmap_im_str/reinsert_mut_one_1000    | 171.91 ns  |
-| hashmap_im_str/reinsert_mut_one_5000    | 185.31 ns  |
-| hashmap_im_str/reinsert_mut_one_10000   | 200.74 ns  |
-| hashmap_im_str/reinsert_mut_one_50000   | 364.20 ns  |
-| hashmap_im_str/reinsert_mut_one_100000  | 503.41 ns  |
-| hashmap_im_str/remove_100               | 118.89 µs |
-| hashmap_im_str/remove_mut_100           | 14.369 µs |
-| hashmap_im_str/remove_1000              | 1.5951 ms  |
-| hashmap_im_str/remove_mut_1000          | 163.88 µs |
-| hashmap_im_str/remove_5000              | 8.7068 ms  |
-| hashmap_im_str/remove_mut_5000          | 985.48 µs |
-| hashmap_im_str/remove_10000             | 17.664 ms  |
-| hashmap_im_str/remove_mut_10000         | 1.8837 ms  |
-| hashmap_im_str/iter_100                 | 472.35 ns  |
-| hashmap_im_str/iter_1000                | 5.3049 µs |
-| hashmap_im_str/iter_5000                | 34.319 µs |
-| hashmap_im_str/iter_10000               | 55.219 µs |
-| ordmap_str/lookup_100                   | 3.1029 µs |
-| ordmap_str/lookup_1000                  | 79.484 µs |
-| ordmap_str/lookup_5000                  | 653.35 µs |
-| ordmap_str/lookup_10000                 | 1.5351 ms  |
-| ordmap_str/lookup_one_100               | 29.764 ns  |
-| ordmap_str/lookup_one_1000              | 44.121 ns  |
-| ordmap_str/lookup_one_5000              | 54.501 ns  |
-| ordmap_str/lookup_one_10000             | 58.974 ns  |
-| ordmap_str/lookup_one_50000             | 66.836 ns  |
-| ordmap_str/lookup_one_100000            | 72.613 ns  |
-| ordmap_str/insert_100                   | 131.72 µs |
-| ordmap_str/insert_1000                  | 1.9043 ms  |
-| ordmap_str/insert_5000                  | 11.479 ms  |
-| ordmap_str/insert_10000                 | 25.308 ms  |
-| ordmap_str/insert_one_100               | 1.7844 µs |
-| ordmap_str/insert_one_1000              | 2.5660 µs |
-| ordmap_str/insert_one_5000              | 3.3604 µs |
-| ordmap_str/insert_one_10000             | 3.4313 µs |
-| ordmap_str/insert_mut_100               | 13.780 µs |
-| ordmap_str/insert_mut_1000              | 164.49 µs |
-| ordmap_str/insert_mut_5000              | 944.96 µs |
-| ordmap_str/insert_mut_10000             | 1.9325 ms  |
-| ordmap_str/reinsert_mut_one_100         | 175.79 ns  |
-| ordmap_str/reinsert_mut_one_1000        | 279.77 ns  |
-| ordmap_str/reinsert_mut_one_5000        | 376.85 ns  |
-| ordmap_str/reinsert_mut_one_10000       | 421.07 ns  |
-| ordmap_str/reinsert_mut_one_50000       | 622.21 ns  |
-| ordmap_str/reinsert_mut_one_100000      | 830.81 ns  |
-| ordmap_str/remove_100                   | 104.00 µs |
-| ordmap_str/remove_mut_100               | 19.585 µs |
-| ordmap_str/remove_1000                  | 1.5868 ms  |
-| ordmap_str/remove_mut_1000              | 260.93 µs |
-| ordmap_str/remove_5000                  | 10.019 ms  |
-| ordmap_str/remove_mut_5000              | 1.6258 ms  |
-| ordmap_str/remove_10000                 | 22.802 ms  |
-| ordmap_str/remove_mut_10000             | 3.5936 ms  |
-| ordmap_str/iter_100                     | 350.50 ns  |
-| ordmap_str/iter_1000                    | 3.2479 µs |
-| ordmap_str/iter_5000                    | 15.930 µs |
-| ordmap_str/iter_10000                   | 32.629 µs |
-| indexmap_big/lookup_100                 | 80.410 µs |
-| indexmap_big/lookup_1000                | 809.99 µs |
-| indexmap_big/lookup_5000                | 4.5495 ms  |
-| indexmap_big/lookup_10000               | 11.623 ms  |
-| indexmap_big/lookup_one_100             | 806.92 ns  |
-| indexmap_big/lookup_one_1000            | 819.77 ns  |
-| indexmap_big/lookup_one_5000            | 828.08 ns  |
-| indexmap_big/lookup_one_10000           | 834.79 ns  |
-| indexmap_big/lookup_one_50000           | 847.91 ns  |
-| indexmap_big/lookup_one_100000          | 847.40 ns  |
-| indexmap_big/insert_100                 | 543.86 µs |
-| indexmap_big/insert_1000                | 6.9731 ms  |
-| indexmap_big/insert_5000                | 63.175 ms  |
-| indexmap_big/insert_10000               | 352.30 ms  |
-| indexmap_big/insert_one_100             | 19.549 µs |
-| indexmap_big/insert_one_1000            | 19.130 µs |
-| indexmap_big/insert_one_5000            | 43.709 µs |
-| indexmap_big/insert_one_10000           | 63.913 µs |
-| indexmap_big/insert_mut_100             | 216.70 µs |
-| indexmap_big/insert_mut_1000            | 3.3218 ms  |
-| indexmap_big/insert_mut_5000            | 22.296 ms  |
-| indexmap_big/insert_mut_10000           | 69.266 ms  |
-| indexmap_big/reinsert_mut_one_100       | 3.1892 µs |
-| indexmap_big/reinsert_mut_one_1000      | 3.1655 µs |
-| indexmap_big/reinsert_mut_one_5000      | 7.9692 µs |
-| indexmap_big/reinsert_mut_one_10000     | 9.9066 µs |
-| indexmap_big/reinsert_mut_one_50000     | 18.632 µs |
-| indexmap_big/reinsert_mut_one_100000    | 28.986 µs |
-| indexmap_big/remove_100                 | 697.82 µs |
-| indexmap_big/remove_mut_100             | 84.346 µs |
-| indexmap_big/remove_1000                | 7.1701 ms  |
-| indexmap_big/remove_mut_1000            | 727.28 µs |
-| indexmap_big/remove_5000                | 95.516 ms  |
-| indexmap_big/remove_mut_5000            | 8.7223 ms  |
-| indexmap_big/remove_10000               | 489.87 ms  |
-| indexmap_big/remove_mut_10000           | 61.714 ms  |
-| indexmap_big/iter_100                   | 12.834 ns  |
-| indexmap_big/iter_1000                  | 12.865 ns  |
-| indexmap_big/iter_5000                  | 3.1720 µs |
-| indexmap_big/iter_10000                 | 21.011 µs |
-| hashmap_std_big/lookup_100              | 81.331 µs |
-| hashmap_std_big/lookup_1000             | 825.56 µs |
-| hashmap_std_big/lookup_one_100          | 827.09 ns  |
-| hashmap_std_big/lookup_one_1000         | 810.70 ns  |
-| hashmap_std_big/lookup_one_5000         | 810.42 ns  |
-| hashmap_std_big/lookup_one_10000        | 826.26 ns  |
-| hashmap_std_big/lookup_one_50000        | 822.01 ns  |
-| hashmap_std_big/lookup_one_100000       | 843.61 ns  |
-| hashmap_std_big/insert_100              | 263.09 µs |
-| hashmap_std_big/insert_1000             | 3.5598 ms  |
-| hashmap_std_big/insert_one_100          | 20.974 µs |
-| hashmap_std_big/insert_one_1000         | 68.891 µs |
-| hashmap_std_big/insert_mut_100          | 197.65 µs |
-| hashmap_std_big/insert_mut_1000         | 2.6993 ms  |
-| hashmap_std_big/reinsert_mut_one_100    | 1.7852 µs |
-| hashmap_std_big/reinsert_mut_one_1000   | 1.7822 µs |
-| hashmap_std_big/reinsert_mut_one_5000   | 2.0267 µs |
-| hashmap_std_big/reinsert_mut_one_10000  | 2.5829 µs |
-| hashmap_std_big/reinsert_mut_one_50000  | 2.7928 µs |
-| hashmap_std_big/reinsert_mut_one_100000 | 2.8155 µs |
-| hashmap_std_big/remove_100              | 904.78 µs |
-| hashmap_std_big/remove_mut_100          | 85.359 µs |
-| hashmap_std_big/remove_1000             | 18.878 ms  |
-| hashmap_std_big/remove_mut_1000         | 735.51 µs |
-| hashmap_std_big/iter_100                | 2.3706 ns  |
-| hashmap_std_big/iter_1000               | 28.152 ns  |
-| hashmap_im_big/lookup_100               | 79.810 µs |
-| hashmap_im_big/lookup_1000              | 801.59 µs |
-| hashmap_im_big/lookup_5000              | 4.3529 ms  |
-| hashmap_im_big/lookup_10000             | 10.374 ms  |
-| hashmap_im_big/lookup_one_100           | 796.61 ns  |
-| hashmap_im_big/lookup_one_1000          | 796.57 ns  |
-| hashmap_im_big/lookup_one_5000          | 802.59 ns  |
-| hashmap_im_big/lookup_one_10000         | 806.33 ns  |
-| hashmap_im_big/lookup_one_50000         | 802.34 ns  |
-| hashmap_im_big/lookup_one_100000        | 808.42 ns  |
-| hashmap_im_big/insert_100               | 3.2327 ms  |
-| hashmap_im_big/insert_1000              | 31.886 ms  |
-| hashmap_im_big/insert_5000              | 271.17 ms  |
-| hashmap_im_big/insert_10000             | 669.62 ms  |
-| hashmap_im_big/insert_one_100           | 37.076 µs |
-| hashmap_im_big/insert_one_1000          | 35.369 µs |
-| hashmap_im_big/insert_one_5000          | 84.775 µs |
-| hashmap_im_big/insert_one_10000         | 80.641 µs |
-| hashmap_im_big/insert_mut_100           | 264.22 µs |
-| hashmap_im_big/insert_mut_1000          | 3.0612 ms  |
-| hashmap_im_big/insert_mut_5000          | 19.055 ms  |
-| hashmap_im_big/insert_mut_10000         | 46.001 ms  |
-| hashmap_im_big/reinsert_mut_one_100     | 1.9416 µs |
-| hashmap_im_big/reinsert_mut_one_1000    | 1.9076 µs |
-| hashmap_im_big/reinsert_mut_one_5000    | 2.7859 µs |
-| hashmap_im_big/reinsert_mut_one_10000   | 3.3898 µs |
-| hashmap_im_big/reinsert_mut_one_50000   | 44.432 µs |
-| hashmap_im_big/reinsert_mut_one_100000  | 25.509 µs |
-| hashmap_im_big/remove_100               | 2.9397 ms  |
-| hashmap_im_big/remove_mut_100           | 101.83 µs |
-| hashmap_im_big/remove_1000              | 28.950 ms  |
-| hashmap_im_big/remove_mut_1000          | 744.02 µs |
-| hashmap_im_big/remove_5000              | 279.20 ms  |
-| hashmap_im_big/remove_mut_5000          | 7.4017 ms  |
-| hashmap_im_big/remove_10000             | 792.99 ms  |
-| hashmap_im_big/remove_mut_10000         | 45.893 ms  |
-| hashmap_im_big/iter_100                 | 6.2090 ns  |
-| hashmap_im_big/iter_1000                | 6.3539 ns  |
-| hashmap_im_big/iter_5000                | 5.7284 µs |
-| hashmap_im_big/iter_10000               | 75.595 µs |
-| ordmap_big/lookup_100                   | 11.472 µs |
-| ordmap_big/lookup_1000                  | 117.55 µs |
-| ordmap_big/lookup_5000                  | 2.6823 ms  |
-| ordmap_big/lookup_10000                 | 15.273 ms  |
-| ordmap_big/lookup_one_100               | 99.276 ns  |
-| ordmap_big/lookup_one_1000              | 98.506 ns  |
-| ordmap_big/lookup_one_5000              | 270.34 ns  |
-| ordmap_big/lookup_one_10000             | 745.11 ns  |
-| ordmap_big/lookup_one_50000             | 1.0473 µs |
-| ordmap_big/lookup_one_100000            | 1.1715 µs |
-| ordmap_big/insert_100                   | 600.14 µs |
-| ordmap_big/insert_1000                  | 6.5770 ms  |
-| ordmap_big/insert_5000                  | 86.632 ms  |
-| ordmap_big/insert_10000                 | 287.77 ms  |
-| ordmap_big/insert_one_100               | 5.2731 µs |
-| ordmap_big/insert_one_1000              | 5.3469 µs |
-| ordmap_big/insert_one_5000              | 31.370 µs |
-| ordmap_big/insert_one_10000             | 47.451 µs |
-| ordmap_big/insert_mut_100               | 200.79 µs |
-| ordmap_big/insert_mut_1000              | 2.3980 ms  |
-| ordmap_big/insert_mut_5000              | 17.611 ms  |
-| ordmap_big/insert_mut_10000             | 63.231 ms  |
-| ordmap_big/reinsert_mut_one_100         | 876.28 ns  |
-| ordmap_big/reinsert_mut_one_1000        | 894.76 ns  |
-| ordmap_big/reinsert_mut_one_5000        | 2.7872 µs |
-| ordmap_big/reinsert_mut_one_10000       | 5.6768 µs |
-| ordmap_big/reinsert_mut_one_50000       | 7.5608 µs |
-| ordmap_big/reinsert_mut_one_100000      | 7.8761 µs |
-| ordmap_big/remove_100                   | 356.56 µs |
-| ordmap_big/remove_mut_100               | 15.089 µs |
-| ordmap_big/remove_1000                  | 3.6679 ms  |
-| ordmap_big/remove_mut_1000              | 112.21 µs |
-| ordmap_big/remove_5000                  | 77.937 ms  |
-| ordmap_big/remove_mut_5000              | 5.2889 ms  |
-| ordmap_big/remove_10000                 | 338.50 ms  |
-| ordmap_big/remove_mut_10000             | 40.966 ms  |
-| ordmap_big/iter_100                     | 11.480 ns  |
-| ordmap_big/iter_1000                    | 11.590 ns  |
-| ordmap_big/iter_5000                    | 3.2357 µs |
-| ordmap_big/iter_10000                   | 22.375 µs |
-| indexmap_specific_i64/get_index_100     | 211.39 ns  |
-| indexmap_specific_i64/front_100         | 1.0480 ns  |
-| indexmap_specific_i64/back_100          | 1.5699 ns  |
-| indexmap_specific_i64/get_index_1000    | 1.8051 µs |
-| indexmap_specific_i64/front_1000        | 1.6928 ns  |
-| indexmap_specific_i64/back_1000         | 2.6651 ns  |
-| indexmap_specific_i64/get_index_5000    | 8.6553 µs |
-| indexmap_specific_i64/front_5000        | 2.4302 ns  |
-| indexmap_specific_i64/back_5000         | 3.8360 ns  |
-| indexmap_specific_i64/get_index_10000   | 17.282 µs |
-| indexmap_specific_i64/front_10000       | 2.4209 ns  |
-| indexmap_specific_i64/back_10000        | 3.8483 ns  |
-| indexmap_specific_i64/get_index_50000   | 89.121 µs |
-| indexmap_specific_i64/front_50000       | 3.3578 ns  |
-| indexmap_specific_i64/back_50000        | 5.1246 ns  |
-| indexmap_specific_i64/get_index_100000  | 188.56 µs |
-| indexmap_specific_i64/front_100000      | 3.3614 ns  |
-| indexmap_specific_i64/back_100000       | 5.1786 ns  |
-| indexmap_specific_i64/get_index_500000  | 1.0918 ms  |
-| indexmap_specific_i64/front_500000      | 4.2383 ns  |
-| indexmap_specific_i64/back_500000       | 6.5517 ns  |
-| indexmap_specific_i64/get_index_1000000 | 2.6469 ms  |
-| indexmap_specific_i64/front_1000000     | 5.3746 ns  |
-| indexmap_specific_i64/back_1000000      | 8.3259 ns  |
-| hashmap_std_i64/insert_mut_5000         | 182.11 µs |
-| hashmap_std_i64/insert_mut_10000        | 364.90 µs |
-| hashmap_std_i64/remove_mut_5000         | 78.309 µs |
-| hashmap_std_i64/remove_mut_10000        | 160.77 µs |
-| hashmap_std_i64/iter_5000               | 4.1492 µs |
-| hashmap_std_i64/iter_10000              | 9.5853 µs |
-| hashmap_std_str/insert_mut_5000         | 661.03 µs |
-| hashmap_std_str/insert_mut_10000        | 1.4271 ms  |
-| hashmap_std_str/remove_mut_5000         | 592.09 µs |
-| hashmap_std_str/remove_mut_10000        | 1.2500 ms  |
-| hashmap_std_str/iter_5000               | 4.9830 µs |
-| hashmap_std_str/iter_10000              | 11.094 µs |
-| hashmap_std_big/insert_mut_5000         | 24.665 ms  |
-| hashmap_std_big/insert_mut_10000        | 80.239 ms  |
-| hashmap_std_big/remove_mut_5000         | 8.2428 ms  |
-| hashmap_std_big/remove_mut_10000        | 34.730 ms  |
-| hashmap_std_big/iter_5000               | 811.15 ns  |
-| hashmap_std_big/iter_10000              | 4.2559 µs |
+| bench                                         | time       |
+| --------------------------------------------- | ---------- |
+| indexmap_im_i64/lookup_100                    | 2.2171 µs |
+| indexmap_im_i64/lookup_1000                   | 36.202 µs |
+| indexmap_im_i64/lookup_5000                   | 351.47 µs |
+| indexmap_im_i64/lookup_10000                  | 822.60 µs |
+| indexmap_im_i64/lookup_one_100                | 41.020 ns  |
+| indexmap_im_i64/lookup_one_1000               | 58.836 ns  |
+| indexmap_im_i64/lookup_one_5000               | 77.556 ns  |
+| indexmap_im_i64/lookup_one_10000              | 92.410 ns  |
+| indexmap_im_i64/lookup_one_50000              | 148.94 ns  |
+| indexmap_im_i64/lookup_one_100000             | 180.91 ns  |
+| indexmap_im_i64/insert_100                    | 42.380 µs |
+| indexmap_im_i64/insert_1000                   | 696.94 µs |
+| indexmap_im_i64/insert_5000                   | 5.1512 ms  |
+| indexmap_im_i64/insert_10000                  | 10.728 ms  |
+| indexmap_im_i64/insert_one_100                | 312.90 ns  |
+| indexmap_im_i64/insert_one_1000               | 625.93 ns  |
+| indexmap_im_i64/insert_one_5000               | 720.41 ns  |
+| indexmap_im_i64/insert_one_10000              | 911.57 ns  |
+| indexmap_im_i64/insert_mut_100                | 7.4663 µs |
+| indexmap_im_i64/insert_mut_1000               | 106.94 µs |
+| indexmap_im_i64/insert_mut_5000               | 555.26 µs |
+| indexmap_im_i64/insert_mut_10000              | 1.0898 ms  |
+| indexmap_im_i64/reinsert_mut_one_100          | 145.14 ns  |
+| indexmap_im_i64/reinsert_mut_one_1000         | 216.73 ns  |
+| indexmap_im_i64/reinsert_mut_one_5000         | 232.90 ns  |
+| indexmap_im_i64/reinsert_mut_one_10000        | 253.31 ns  |
+| indexmap_im_i64/reinsert_mut_one_50000        | 422.88 ns  |
+| indexmap_im_i64/reinsert_mut_one_100000       | 521.35 ns  |
+| indexmap_im_i64/remove_100                    | 41.110 µs |
+| indexmap_im_i64/remove_1000                   | 846.52 µs |
+| indexmap_im_i64/remove_5000                   | 5.5550 ms  |
+| indexmap_im_i64/remove_10000                  | 11.677 ms  |
+| indexmap_im_i64/remove_mut_100                | 7.0278 µs |
+| indexmap_im_i64/remove_mut_1000               | 99.424 µs |
+| indexmap_im_i64/remove_mut_5000               | 709.92 µs |
+| indexmap_im_i64/remove_mut_10000              | 1.4830 ms  |
+| indexmap_im_i64/iter_100                      | 356.32 ns  |
+| indexmap_im_i64/iter_1000                     | 3.1698 µs |
+| indexmap_im_i64/iter_5000                     | 15.915 µs |
+| indexmap_im_i64/iter_10000                    | 31.806 µs |
+| indexmap_crate_i64/lookup_100                 | 1.6420 µs |
+| indexmap_crate_i64/lookup_1000                | 18.837 µs |
+| indexmap_crate_i64/lookup_5000                | 102.79 µs |
+| indexmap_crate_i64/lookup_10000               | 228.51 µs |
+| indexmap_crate_i64/lookup_one_100             | 17.735 ns  |
+| indexmap_crate_i64/lookup_one_1000            | 18.126 ns  |
+| indexmap_crate_i64/lookup_one_5000            | 20.097 ns  |
+| indexmap_crate_i64/lookup_one_10000           | 24.624 ns  |
+| indexmap_crate_i64/lookup_one_50000           | 46.911 ns  |
+| indexmap_crate_i64/lookup_one_100000          | 53.734 ns  |
+| indexmap_crate_i64/insert_100                 | 19.577 µs |
+| indexmap_crate_i64/insert_1000                | 833.47 µs |
+| indexmap_crate_i64/insert_one_100             | 202.35 ns  |
+| indexmap_crate_i64/insert_one_1000            | 1.5547 µs |
+| indexmap_crate_i64/insert_mut_100             | 3.7500 µs |
+| indexmap_crate_i64/insert_mut_1000            | 35.593 µs |
+| indexmap_crate_i64/insert_mut_5000            | 160.58 µs |
+| indexmap_crate_i64/insert_mut_10000           | 327.58 µs |
+| indexmap_crate_i64/reinsert_mut_one_100       | 188.44 ns  |
+| indexmap_crate_i64/reinsert_mut_one_1000      | 901.06 ns  |
+| indexmap_crate_i64/reinsert_mut_one_5000      | 5.3931 µs |
+| indexmap_crate_i64/reinsert_mut_one_10000     | 12.663 µs |
+| indexmap_crate_i64/reinsert_mut_one_50000     | 91.878 µs |
+| indexmap_crate_i64/reinsert_mut_one_100000    | 229.46 µs |
+| indexmap_crate_i64/remove_100                 | 19.978 µs |
+| indexmap_crate_i64/remove_1000                | 1.6563 ms  |
+| indexmap_crate_i64/remove_mut_100             | 6.6191 µs |
+| indexmap_crate_i64/remove_mut_1000            | 446.30 µs |
+| indexmap_crate_i64/iter_100                   | 27.907 ns  |
+| indexmap_crate_i64/iter_1000                  | 236.26 ns  |
+| indexmap_crate_i64/iter_5000                  | 1.1756 µs |
+| indexmap_crate_i64/iter_10000                 | 2.3203 µs |
+| hashmap_std_i64/lookup_100                    | 1.1682 µs |
+| hashmap_std_i64/lookup_1000                   | 11.456 µs |
+| hashmap_std_i64/lookup_5000                   | 60.143 µs |
+| hashmap_std_i64/lookup_10000                  | 118.40 µs |
+| hashmap_std_i64/lookup_one_100                | 14.053 ns  |
+| hashmap_std_i64/lookup_one_1000               | 14.117 ns  |
+| hashmap_std_i64/lookup_one_5000               | 14.707 ns  |
+| hashmap_std_i64/lookup_one_10000              | 15.870 ns  |
+| hashmap_std_i64/lookup_one_50000              | 23.690 ns  |
+| hashmap_std_i64/lookup_one_100000             | 27.946 ns  |
+| hashmap_std_i64/insert_100                    | 8.4958 µs |
+| hashmap_std_i64/insert_1000                   | 300.90 µs |
+| hashmap_std_i64/insert_one_100                | 80.599 ns  |
+| hashmap_std_i64/insert_one_1000               | 806.92 ns  |
+| hashmap_std_i64/insert_mut_100                | 3.5235 µs |
+| hashmap_std_i64/insert_mut_1000               | 40.574 µs |
+| hashmap_std_i64/insert_mut_5000               | 179.58 µs |
+| hashmap_std_i64/insert_mut_10000              | 369.42 µs |
+| hashmap_std_i64/reinsert_mut_one_100          | 43.710 ns  |
+| hashmap_std_i64/reinsert_mut_one_1000         | 37.025 ns  |
+| hashmap_std_i64/reinsert_mut_one_5000         | 38.963 ns  |
+| hashmap_std_i64/reinsert_mut_one_10000        | 40.865 ns  |
+| hashmap_std_i64/reinsert_mut_one_50000        | 55.443 ns  |
+| hashmap_std_i64/reinsert_mut_one_100000       | 62.903 ns  |
+| hashmap_std_i64/remove_100                    | 7.3617 µs |
+| hashmap_std_i64/remove_1000                   | 843.37 µs |
+| hashmap_std_i64/remove_mut_100                | 1.3146 µs |
+| hashmap_std_i64/remove_mut_1000               | 13.847 µs |
+| hashmap_std_i64/remove_mut_5000               | 74.163 µs |
+| hashmap_std_i64/remove_mut_10000              | 159.96 µs |
+| hashmap_std_i64/iter_100                      | 70.627 ns  |
+| hashmap_std_i64/iter_1000                     | 712.67 ns  |
+| hashmap_std_i64/iter_5000                     | 3.7449 µs |
+| hashmap_std_i64/iter_10000                    | 8.9011 µs |
+| hashmap_im_i64/lookup_100                     | 1.2479 µs |
+| hashmap_im_i64/lookup_1000                    | 13.583 µs |
+| hashmap_im_i64/lookup_5000                    | 73.628 µs |
+| hashmap_im_i64/lookup_10000                   | 173.06 µs |
+| hashmap_im_i64/lookup_one_100                 | 16.427 ns  |
+| hashmap_im_i64/lookup_one_1000                | 22.375 ns  |
+| hashmap_im_i64/lookup_one_5000                | 19.370 ns  |
+| hashmap_im_i64/lookup_one_10000               | 20.728 ns  |
+| hashmap_im_i64/lookup_one_50000               | 38.256 ns  |
+| hashmap_im_i64/lookup_one_100000              | 46.291 ns  |
+| hashmap_im_i64/insert_100                     | 25.902 µs |
+| hashmap_im_i64/insert_1000                    | 377.55 µs |
+| hashmap_im_i64/insert_5000                    | 2.8991 ms  |
+| hashmap_im_i64/insert_10000                   | 5.9935 ms  |
+| hashmap_im_i64/insert_one_100                 | 293.94 ns  |
+| hashmap_im_i64/insert_one_1000                | 597.01 ns  |
+| hashmap_im_i64/insert_one_5000                | 540.55 ns  |
+| hashmap_im_i64/insert_one_10000               | 538.76 ns  |
+| hashmap_im_i64/insert_mut_100                 | 3.4990 µs |
+| hashmap_im_i64/insert_mut_1000                | 47.485 µs |
+| hashmap_im_i64/insert_mut_5000                | 197.35 µs |
+| hashmap_im_i64/insert_mut_10000               | 353.21 µs |
+| hashmap_im_i64/reinsert_mut_one_100           | 54.240 ns  |
+| hashmap_im_i64/reinsert_mut_one_1000          | 79.050 ns  |
+| hashmap_im_i64/reinsert_mut_one_5000          | 66.983 ns  |
+| hashmap_im_i64/reinsert_mut_one_10000         | 67.341 ns  |
+| hashmap_im_i64/reinsert_mut_one_50000         | 127.94 ns  |
+| hashmap_im_i64/reinsert_mut_one_100000        | 128.00 ns  |
+| hashmap_im_i64/remove_100                     | 23.659 µs |
+| hashmap_im_i64/remove_1000                    | 464.66 µs |
+| hashmap_im_i64/remove_5000                    | 3.0635 ms  |
+| hashmap_im_i64/remove_10000                   | 6.2295 ms  |
+| hashmap_im_i64/remove_mut_100                 | 3.6345 µs |
+| hashmap_im_i64/remove_mut_1000                | 43.986 µs |
+| hashmap_im_i64/remove_mut_5000                | 245.16 µs |
+| hashmap_im_i64/remove_mut_10000               | 437.05 µs |
+| hashmap_im_i64/iter_100                       | 473.48 ns  |
+| hashmap_im_i64/iter_1000                      | 5.1771 µs |
+| hashmap_im_i64/iter_5000                      | 26.549 µs |
+| hashmap_im_i64/iter_10000                     | 48.020 µs |
+| ordmap_i64/lookup_100                         | 1.0600 µs |
+| ordmap_i64/lookup_1000                        | 19.535 µs |
+| ordmap_i64/lookup_5000                        | 144.08 µs |
+| ordmap_i64/lookup_10000                       | 336.52 µs |
+| ordmap_i64/lookup_one_100                     | 14.462 ns  |
+| ordmap_i64/lookup_one_1000                    | 23.373 ns  |
+| ordmap_i64/lookup_one_5000                    | 31.088 ns  |
+| ordmap_i64/lookup_one_10000                   | 37.530 ns  |
+| ordmap_i64/lookup_one_50000                   | 58.591 ns  |
+| ordmap_i64/lookup_one_100000                  | 68.430 ns  |
+| ordmap_i64/insert_100                         | 12.724 µs |
+| ordmap_i64/insert_1000                        | 250.13 µs |
+| ordmap_i64/insert_5000                        | 1.8464 ms  |
+| ordmap_i64/insert_10000                       | 4.3690 ms  |
+| ordmap_i64/insert_one_100                     | 157.97 ns  |
+| ordmap_i64/insert_one_1000                    | 272.01 ns  |
+| ordmap_i64/insert_one_5000                    | 394.37 ns  |
+| ordmap_i64/insert_one_10000                   | 420.76 ns  |
+| ordmap_i64/insert_mut_100                     | 3.1782 µs |
+| ordmap_i64/insert_mut_1000                    | 45.724 µs |
+| ordmap_i64/insert_mut_5000                    | 331.64 µs |
+| ordmap_i64/insert_mut_10000                   | 725.69 µs |
+| ordmap_i64/reinsert_mut_one_100               | 74.409 ns  |
+| ordmap_i64/reinsert_mut_one_1000              | 102.85 ns  |
+| ordmap_i64/reinsert_mut_one_5000              | 124.71 ns  |
+| ordmap_i64/reinsert_mut_one_10000             | 136.92 ns  |
+| ordmap_i64/reinsert_mut_one_50000             | 173.87 ns  |
+| ordmap_i64/reinsert_mut_one_100000            | 189.81 ns  |
+| ordmap_i64/remove_100                         | 13.116 µs |
+| ordmap_i64/remove_1000                        | 274.00 µs |
+| ordmap_i64/remove_5000                        | 1.9400 ms  |
+| ordmap_i64/remove_10000                       | 4.6772 ms  |
+| ordmap_i64/remove_mut_100                     | 2.9447 µs |
+| ordmap_i64/remove_mut_1000                    | 45.059 µs |
+| ordmap_i64/remove_mut_5000                    | 349.43 µs |
+| ordmap_i64/remove_mut_10000                   | 776.89 µs |
+| ordmap_i64/iter_100                           | 373.98 ns  |
+| ordmap_i64/iter_1000                          | 3.4944 µs |
+| ordmap_i64/iter_5000                          | 17.809 µs |
+| ordmap_i64/iter_10000                         | 35.402 µs |
+| indexmap_im_str/lookup_100                    | 4.2906 µs |
+| indexmap_im_str/lookup_1000                   | 67.250 µs |
+| indexmap_im_str/lookup_5000                   | 532.15 µs |
+| indexmap_im_str/lookup_10000                  | 1.1960 ms  |
+| indexmap_im_str/lookup_one_100                | 49.332 ns  |
+| indexmap_im_str/lookup_one_1000               | 72.456 ns  |
+| indexmap_im_str/lookup_one_5000               | 105.43 ns  |
+| indexmap_im_str/lookup_one_10000              | 116.85 ns  |
+| indexmap_im_str/lookup_one_50000              | 277.92 ns  |
+| indexmap_im_str/lookup_one_100000             | 409.19 ns  |
+| indexmap_im_str/insert_100                    | 196.12 µs |
+| indexmap_im_str/insert_1000                   | 2.4051 ms  |
+| indexmap_im_str/insert_5000                   | 13.130 ms  |
+| indexmap_im_str/insert_10000                  | 27.994 ms  |
+| indexmap_im_str/insert_one_100                | 1.5608 µs |
+| indexmap_im_str/insert_one_1000               | 2.2796 µs |
+| indexmap_im_str/insert_one_5000               | 2.2142 µs |
+| indexmap_im_str/insert_one_10000              | 2.6012 µs |
+| indexmap_im_str/insert_mut_100                | 22.195 µs |
+| indexmap_im_str/insert_mut_1000               | 253.57 µs |
+| indexmap_im_str/insert_mut_5000               | 1.3439 ms  |
+| indexmap_im_str/insert_mut_10000              | 2.8051 ms  |
+| indexmap_im_str/reinsert_mut_one_100          | 325.14 ns  |
+| indexmap_im_str/reinsert_mut_one_1000         | 426.81 ns  |
+| indexmap_im_str/reinsert_mut_one_5000         | 482.78 ns  |
+| indexmap_im_str/reinsert_mut_one_10000        | 515.00 ns  |
+| indexmap_im_str/reinsert_mut_one_50000        | 1.1780 µs |
+| indexmap_im_str/reinsert_mut_one_100000       | 1.3900 µs |
+| indexmap_im_str/remove_100                    | 155.20 µs |
+| indexmap_im_str/remove_1000                   | 1.9469 ms  |
+| indexmap_im_str/remove_5000                   | 11.355 ms  |
+| indexmap_im_str/remove_10000                  | 24.762 ms  |
+| indexmap_im_str/remove_mut_100                | 26.261 µs |
+| indexmap_im_str/remove_mut_1000               | 316.29 µs |
+| indexmap_im_str/remove_mut_5000               | 1.9002 ms  |
+| indexmap_im_str/remove_mut_10000              | 4.0522 ms  |
+| indexmap_im_str/iter_100                      | 373.05 ns  |
+| indexmap_im_str/iter_1000                     | 3.3810 µs |
+| indexmap_im_str/iter_5000                     | 17.290 µs |
+| indexmap_im_str/iter_10000                    | 33.298 µs |
+| indexmap_crate_str/lookup_100                 | 2.0439 µs |
+| indexmap_crate_str/lookup_1000                | 24.478 µs |
+| indexmap_crate_str/lookup_5000                | 209.45 µs |
+| indexmap_crate_str/lookup_10000               | 487.99 µs |
+| indexmap_crate_str/lookup_one_100             | 26.088 ns  |
+| indexmap_crate_str/lookup_one_1000            | 28.909 ns  |
+| indexmap_crate_str/lookup_one_5000            | 45.255 ns  |
+| indexmap_crate_str/lookup_one_10000           | 54.772 ns  |
+| indexmap_crate_str/lookup_one_50000           | 127.42 ns  |
+| indexmap_crate_str/lookup_one_100000          | 168.36 ns  |
+| indexmap_crate_str/insert_100                 | 371.48 µs |
+| indexmap_crate_str/insert_1000                | 32.734 ms  |
+| indexmap_crate_str/insert_one_100             | 7.8976 µs |
+| indexmap_crate_str/insert_one_1000            | 78.581 µs |
+| indexmap_crate_str/insert_mut_100             | 11.614 µs |
+| indexmap_crate_str/insert_mut_1000            | 122.75 µs |
+| indexmap_crate_str/insert_mut_5000            | 613.74 µs |
+| indexmap_crate_str/insert_mut_10000           | 1.3460 ms  |
+| indexmap_crate_str/reinsert_mut_one_100       | 280.08 ns  |
+| indexmap_crate_str/reinsert_mut_one_1000      | 1.2445 µs |
+| indexmap_crate_str/reinsert_mut_one_5000      | 6.7717 µs |
+| indexmap_crate_str/reinsert_mut_one_10000     | 15.541 µs |
+| indexmap_crate_str/reinsert_mut_one_50000     | 160.30 µs |
+| indexmap_crate_str/reinsert_mut_one_100000    | 351.00 µs |
+| indexmap_crate_str/remove_100                 | 398.91 µs |
+| indexmap_crate_str/remove_1000                | 35.646 ms  |
+| indexmap_crate_str/remove_mut_100             | 14.701 µs |
+| indexmap_crate_str/remove_mut_1000            | 607.27 µs |
+| indexmap_crate_str/iter_100                   | 45.005 ns  |
+| indexmap_crate_str/iter_1000                  | 446.07 ns  |
+| indexmap_crate_str/iter_5000                  | 2.2660 µs |
+| indexmap_crate_str/iter_10000                 | 4.5314 µs |
+| hashmap_std_str/lookup_100                    | 1.7991 µs |
+| hashmap_std_str/lookup_1000                   | 19.244 µs |
+| hashmap_std_str/lookup_5000                   | 152.79 µs |
+| hashmap_std_str/lookup_10000                  | 343.90 µs |
+| hashmap_std_str/lookup_one_100                | 23.213 ns  |
+| hashmap_std_str/lookup_one_1000               | 25.795 ns  |
+| hashmap_std_str/lookup_one_5000               | 46.694 ns  |
+| hashmap_std_str/lookup_one_10000              | 51.470 ns  |
+| hashmap_std_str/lookup_one_50000              | 79.630 ns  |
+| hashmap_std_str/lookup_one_100000             | 199.56 ns  |
+| hashmap_std_str/insert_100                    | 408.29 µs |
+| hashmap_std_str/insert_1000                   | 38.068 ms  |
+| hashmap_std_str/insert_one_100                | 8.0109 µs |
+| hashmap_std_str/insert_one_1000               | 78.599 µs |
+| hashmap_std_str/insert_mut_100                | 13.046 µs |
+| hashmap_std_str/insert_mut_1000               | 156.99 µs |
+| hashmap_std_str/insert_mut_5000               | 792.94 µs |
+| hashmap_std_str/insert_mut_10000              | 2.0844 ms  |
+| hashmap_std_str/reinsert_mut_one_100          | 102.47 ns  |
+| hashmap_std_str/reinsert_mut_one_1000         | 101.76 ns  |
+| hashmap_std_str/reinsert_mut_one_5000         | 131.88 ns  |
+| hashmap_std_str/reinsert_mut_one_10000        | 126.48 ns  |
+| hashmap_std_str/reinsert_mut_one_50000        | 340.05 ns  |
+| hashmap_std_str/reinsert_mut_one_100000       | 371.47 ns  |
+| hashmap_std_str/remove_100                    | 399.44 µs |
+| hashmap_std_str/remove_1000                   | 37.626 ms  |
+| hashmap_std_str/remove_mut_100                | 10.596 µs |
+| hashmap_std_str/remove_mut_1000               | 105.66 µs |
+| hashmap_std_str/remove_mut_5000               | 608.14 µs |
+| hashmap_std_str/remove_mut_10000              | 1.3607 ms  |
+| hashmap_std_str/iter_100                      | 98.367 ns  |
+| hashmap_std_str/iter_1000                     | 1.0069 µs |
+| hashmap_std_str/iter_5000                     | 5.4940 µs |
+| hashmap_std_str/iter_10000                    | 12.348 µs |
+| hashmap_im_str/lookup_100                     | 2.2419 µs |
+| hashmap_im_str/lookup_1000                    | 31.219 µs |
+| hashmap_im_str/lookup_5000                    | 218.35 µs |
+| hashmap_im_str/lookup_10000                   | 511.94 µs |
+| hashmap_im_str/lookup_one_100                 | 24.697 ns  |
+| hashmap_im_str/lookup_one_1000                | 34.134 ns  |
+| hashmap_im_str/lookup_one_5000                | 48.009 ns  |
+| hashmap_im_str/lookup_one_10000               | 53.716 ns  |
+| hashmap_im_str/lookup_one_50000               | 108.68 ns  |
+| hashmap_im_str/lookup_one_100000              | 205.23 ns  |
+| hashmap_im_str/insert_100                     | 114.73 µs |
+| hashmap_im_str/insert_1000                    | 1.7635 ms  |
+| hashmap_im_str/insert_5000                    | 8.7512 ms  |
+| hashmap_im_str/insert_10000                   | 17.986 ms  |
+| hashmap_im_str/insert_one_100                 | 1.1482 µs |
+| hashmap_im_str/insert_one_1000                | 2.3543 µs |
+| hashmap_im_str/insert_one_5000                | 1.7225 µs |
+| hashmap_im_str/insert_one_10000               | 2.0179 µs |
+| hashmap_im_str/insert_mut_100                 | 12.330 µs |
+| hashmap_im_str/insert_mut_1000                | 148.37 µs |
+| hashmap_im_str/insert_mut_5000                | 740.86 µs |
+| hashmap_im_str/insert_mut_10000               | 1.4000 ms  |
+| hashmap_im_str/reinsert_mut_one_100           | 129.20 ns  |
+| hashmap_im_str/reinsert_mut_one_1000          | 157.79 ns  |
+| hashmap_im_str/reinsert_mut_one_5000          | 175.89 ns  |
+| hashmap_im_str/reinsert_mut_one_10000         | 181.79 ns  |
+| hashmap_im_str/reinsert_mut_one_50000         | 422.89 ns  |
+| hashmap_im_str/reinsert_mut_one_100000        | 544.64 ns  |
+| hashmap_im_str/remove_100                     | 116.95 µs |
+| hashmap_im_str/remove_1000                    | 1.5271 ms  |
+| hashmap_im_str/remove_5000                    | 8.2255 ms  |
+| hashmap_im_str/remove_10000                   | 17.010 ms  |
+| hashmap_im_str/remove_mut_100                 | 15.352 µs |
+| hashmap_im_str/remove_mut_1000                | 173.97 µs |
+| hashmap_im_str/remove_mut_5000                | 975.90 µs |
+| hashmap_im_str/remove_mut_10000               | 1.7802 ms  |
+| hashmap_im_str/iter_100                       | 429.25 ns  |
+| hashmap_im_str/iter_1000                      | 4.6459 µs |
+| hashmap_im_str/iter_5000                      | 33.943 µs |
+| hashmap_im_str/iter_10000                     | 55.191 µs |
+| ordmap_str/lookup_100                         | 3.0671 µs |
+| ordmap_str/lookup_1000                        | 74.624 µs |
+| ordmap_str/lookup_5000                        | 631.07 µs |
+| ordmap_str/lookup_10000                       | 1.5052 ms  |
+| ordmap_str/lookup_one_100                     | 52.880 ns  |
+| ordmap_str/lookup_one_1000                    | 86.761 ns  |
+| ordmap_str/lookup_one_5000                    | 134.37 ns  |
+| ordmap_str/lookup_one_10000                   | 162.04 ns  |
+| ordmap_str/lookup_one_50000                   | 252.93 ns  |
+| ordmap_str/lookup_one_100000                  | 391.94 ns  |
+| ordmap_str/insert_100                         | 115.00 µs |
+| ordmap_str/insert_1000                        | 1.7559 ms  |
+| ordmap_str/insert_5000                        | 10.955 ms  |
+| ordmap_str/insert_10000                       | 25.911 ms  |
+| ordmap_str/insert_one_100                     | 1.6104 µs |
+| ordmap_str/insert_one_1000                    | 2.2359 µs |
+| ordmap_str/insert_one_5000                    | 2.9382 µs |
+| ordmap_str/insert_one_10000                   | 3.0738 µs |
+| ordmap_str/insert_mut_100                     | 13.111 µs |
+| ordmap_str/insert_mut_1000                    | 189.28 µs |
+| ordmap_str/insert_mut_5000                    | 1.2542 ms  |
+| ordmap_str/insert_mut_10000                   | 2.8106 ms  |
+| ordmap_str/reinsert_mut_one_100               | 168.47 ns  |
+| ordmap_str/reinsert_mut_one_1000              | 266.07 ns  |
+| ordmap_str/reinsert_mut_one_5000              | 360.05 ns  |
+| ordmap_str/reinsert_mut_one_10000             | 401.13 ns  |
+| ordmap_str/reinsert_mut_one_50000             | 578.33 ns  |
+| ordmap_str/reinsert_mut_one_100000            | 799.62 ns  |
+| ordmap_str/remove_100                         | 98.817 µs |
+| ordmap_str/remove_1000                        | 1.4766 ms  |
+| ordmap_str/remove_5000                        | 9.5179 ms  |
+| ordmap_str/remove_10000                       | 21.614 ms  |
+| ordmap_str/remove_mut_100                     | 15.428 µs |
+| ordmap_str/remove_mut_1000                    | 217.93 µs |
+| ordmap_str/remove_mut_5000                    | 1.4221 ms  |
+| ordmap_str/remove_mut_10000                   | 3.1568 ms  |
+| ordmap_str/iter_100                           | 362.36 ns  |
+| ordmap_str/iter_1000                          | 3.3644 µs |
+| ordmap_str/iter_5000                          | 17.022 µs |
+| ordmap_str/iter_10000                         | 34.000 µs |
+| indexmap_im_big/lookup_100                    | 82.191 µs |
+| indexmap_im_big/lookup_1000                   | 822.32 µs |
+| indexmap_im_big/lookup_5000                   | 4.1792 ms  |
+| indexmap_im_big/lookup_10000                  | 8.3462 ms  |
+| indexmap_im_big/lookup_one_100                | 807.03 ns  |
+| indexmap_im_big/lookup_one_1000               | 825.16 ns  |
+| indexmap_im_big/lookup_one_5000               | 812.10 ns  |
+| indexmap_im_big/lookup_one_10000              | 808.05 ns  |
+| indexmap_im_big/lookup_one_50000              | 810.77 ns  |
+| indexmap_im_big/lookup_one_100000             | 821.06 ns  |
+| indexmap_im_big/insert_100                    | 557.51 µs |
+| indexmap_im_big/insert_1000                   | 7.1817 ms  |
+| indexmap_im_big/insert_5000                   | 36.840 ms  |
+| indexmap_im_big/insert_10000                  | 71.600 ms  |
+| indexmap_im_big/insert_one_100                | 4.9734 µs |
+| indexmap_im_big/insert_one_1000               | 4.6083 µs |
+| indexmap_im_big/insert_one_5000               | 5.0561 µs |
+| indexmap_im_big/insert_one_10000              | 4.7188 µs |
+| indexmap_im_big/insert_mut_100                | 220.85 µs |
+| indexmap_im_big/insert_mut_1000               | 5.3462 ms  |
+| indexmap_im_big/insert_mut_5000               | 27.600 ms  |
+| indexmap_im_big/insert_mut_10000              | 35.997 ms  |
+| indexmap_im_big/reinsert_mut_one_100          | 3.2089 µs |
+| indexmap_im_big/reinsert_mut_one_1000         | 3.3190 µs |
+| indexmap_im_big/reinsert_mut_one_5000         | 3.1713 µs |
+| indexmap_im_big/reinsert_mut_one_10000        | 3.2081 µs |
+| indexmap_im_big/reinsert_mut_one_50000        | 3.1907 µs |
+| indexmap_im_big/reinsert_mut_one_100000       | 3.2254 µs |
+| indexmap_im_big/remove_100                    | 648.15 µs |
+| indexmap_im_big/remove_1000                   | 6.2712 ms  |
+| indexmap_im_big/remove_5000                   | 31.208 ms  |
+| indexmap_im_big/remove_10000                  | 69.438 ms  |
+| indexmap_im_big/remove_mut_100                | 84.506 µs |
+| indexmap_im_big/remove_mut_1000               | 742.11 µs |
+| indexmap_im_big/remove_mut_5000               | 3.6890 ms  |
+| indexmap_im_big/remove_mut_10000              | 7.3721 ms  |
+| indexmap_im_big/iter_100                      | 11.714 ns  |
+| indexmap_im_big/iter_1000                     | 12.163 ns  |
+| indexmap_im_big/iter_5000                     | 11.925 ns  |
+| indexmap_im_big/iter_10000                    | 11.841 ns  |
+| indexmap_crate_big/lookup_100                 | 11.415 µs |
+| indexmap_crate_big/lookup_1000                | 117.76 µs |
+| indexmap_crate_big/lookup_5000                | 914.51 µs |
+| indexmap_crate_big/lookup_10000               | 1.9003 ms  |
+| indexmap_crate_big/lookup_one_100             | 101.38 ns  |
+| indexmap_crate_big/lookup_one_1000            | 103.02 ns  |
+| indexmap_crate_big/lookup_one_5000            | 102.24 ns  |
+| indexmap_crate_big/lookup_one_10000           | 101.81 ns  |
+| indexmap_crate_big/lookup_one_50000           | 104.39 ns  |
+| indexmap_crate_big/lookup_one_100000          | 102.66 ns  |
+| indexmap_crate_big/insert_100                 | 193.64 µs |
+| indexmap_crate_big/insert_1000                | 3.1541 ms  |
+| indexmap_crate_big/insert_one_100             | 1.6482 µs |
+| indexmap_crate_big/insert_one_1000            | 1.6422 µs |
+| indexmap_crate_big/insert_mut_100             | 149.96 µs |
+| indexmap_crate_big/insert_mut_1000            | 2.7409 ms  |
+| indexmap_crate_big/insert_mut_5000            | 14.547 ms  |
+| indexmap_crate_big/insert_mut_10000           | 29.845 ms  |
+| indexmap_crate_big/reinsert_mut_one_100       | 1.5409 µs |
+| indexmap_crate_big/reinsert_mut_one_1000      | 1.5453 µs |
+| indexmap_crate_big/reinsert_mut_one_5000      | 1.5493 µs |
+| indexmap_crate_big/reinsert_mut_one_10000     | 3.5970 µs |
+| indexmap_crate_big/reinsert_mut_one_50000     | 3.5717 µs |
+| indexmap_crate_big/reinsert_mut_one_100000    | 3.6026 µs |
+| indexmap_crate_big/remove_100                 | 7.7669 µs |
+| indexmap_crate_big/remove_1000                | 211.24 µs |
+| indexmap_crate_big/remove_mut_100             | 2.2999 µs |
+| indexmap_crate_big/remove_mut_1000            | 26.126 µs |
+| indexmap_crate_big/iter_100                   | 461.93 ps  |
+| indexmap_crate_big/iter_1000                  | 474.42 ps  |
+| indexmap_crate_big/iter_5000                  | 469.16 ps  |
+| indexmap_crate_big/iter_10000                 | 460.85 ps  |
+| hashmap_std_big/lookup_100                    | 80.889 µs |
+| hashmap_std_big/lookup_1000                   | 822.07 µs |
+| hashmap_std_big/lookup_5000                   | 4.1294 ms  |
+| hashmap_std_big/lookup_10000                  | 8.4620 ms  |
+| hashmap_std_big/lookup_one_100                | 812.92 ns  |
+| hashmap_std_big/lookup_one_1000               | 824.92 ns  |
+| hashmap_std_big/lookup_one_5000               | 801.40 ns  |
+| hashmap_std_big/lookup_one_10000              | 802.99 ns  |
+| hashmap_std_big/lookup_one_50000              | 797.28 ns  |
+| hashmap_std_big/lookup_one_100000             | 802.95 ns  |
+| hashmap_std_big/insert_100                    | 207.97 µs |
+| hashmap_std_big/insert_1000                   | 3.3396 ms  |
+| hashmap_std_big/insert_one_100                | 3.3339 µs |
+| hashmap_std_big/insert_one_1000               | 3.3747 µs |
+| hashmap_std_big/insert_mut_100                | 151.82 µs |
+| hashmap_std_big/insert_mut_1000               | 2.7925 ms  |
+| hashmap_std_big/insert_mut_5000               | 14.811 ms  |
+| hashmap_std_big/insert_mut_10000              | 30.241 ms  |
+| hashmap_std_big/reinsert_mut_one_100          | 1.7825 µs |
+| hashmap_std_big/reinsert_mut_one_1000         | 1.7680 µs |
+| hashmap_std_big/reinsert_mut_one_5000         | 1.7614 µs |
+| hashmap_std_big/reinsert_mut_one_10000        | 1.8350 µs |
+| hashmap_std_big/reinsert_mut_one_50000        | 1.7826 µs |
+| hashmap_std_big/reinsert_mut_one_100000       | 1.7476 µs |
+| hashmap_std_big/remove_100                    | 914.70 µs |
+| hashmap_std_big/remove_1000                   | 17.943 ms  |
+| hashmap_std_big/remove_mut_100                | 86.366 µs |
+| hashmap_std_big/remove_mut_1000               | 741.19 µs |
+| hashmap_std_big/remove_mut_5000               | 3.6612 ms  |
+| hashmap_std_big/remove_mut_10000              | 7.1725 ms  |
+| hashmap_std_big/iter_100                      | 2.2972 ns  |
+| hashmap_std_big/iter_1000                     | 31.814 ns  |
+| hashmap_std_big/iter_5000                     | 110.15 ns  |
+| hashmap_std_big/iter_10000                    | 259.02 ns  |
+| hashmap_im_big/lookup_100                     | 80.320 µs |
+| hashmap_im_big/lookup_1000                    | 805.17 µs |
+| hashmap_im_big/lookup_5000                    | 4.0663 ms  |
+| hashmap_im_big/lookup_10000                   | 8.2241 ms  |
+| hashmap_im_big/lookup_one_100                 | 808.74 ns  |
+| hashmap_im_big/lookup_one_1000                | 800.36 ns  |
+| hashmap_im_big/lookup_one_5000                | 802.26 ns  |
+| hashmap_im_big/lookup_one_10000               | 794.94 ns  |
+| hashmap_im_big/lookup_one_50000               | 798.10 ns  |
+| hashmap_im_big/lookup_one_100000              | 807.45 ns  |
+| hashmap_im_big/insert_100                     | 1.4236 ms  |
+| hashmap_im_big/insert_1000                    | 15.144 ms  |
+| hashmap_im_big/insert_5000                    | 75.530 ms  |
+| hashmap_im_big/insert_10000                   | 151.50 ms  |
+| hashmap_im_big/insert_one_100                 | 13.270 µs |
+| hashmap_im_big/insert_one_1000                | 13.604 µs |
+| hashmap_im_big/insert_one_5000                | 13.219 µs |
+| hashmap_im_big/insert_one_10000               | 13.317 µs |
+| hashmap_im_big/insert_mut_100                 | 198.40 µs |
+| hashmap_im_big/insert_mut_1000                | 2.9823 ms  |
+| hashmap_im_big/insert_mut_5000                | 15.762 ms  |
+| hashmap_im_big/insert_mut_10000               | 32.388 ms  |
+| hashmap_im_big/reinsert_mut_one_100           | 1.9615 µs |
+| hashmap_im_big/reinsert_mut_one_1000          | 1.9746 µs |
+| hashmap_im_big/reinsert_mut_one_5000          | 1.9808 µs |
+| hashmap_im_big/reinsert_mut_one_10000         | 1.9407 µs |
+| hashmap_im_big/reinsert_mut_one_50000         | 1.9568 µs |
+| hashmap_im_big/reinsert_mut_one_100000        | 4.2006 µs |
+| hashmap_im_big/remove_100                     | 1.2273 ms  |
+| hashmap_im_big/remove_1000                    | 11.796 ms  |
+| hashmap_im_big/remove_5000                    | 62.555 ms  |
+| hashmap_im_big/remove_10000                   | 124.49 ms  |
+| hashmap_im_big/remove_mut_100                 | 85.629 µs |
+| hashmap_im_big/remove_mut_1000                | 727.70 µs |
+| hashmap_im_big/remove_mut_5000                | 3.6265 ms  |
+| hashmap_im_big/remove_mut_10000               | 7.2270 ms  |
+| hashmap_im_big/iter_100                       | 6.5006 ns  |
+| hashmap_im_big/iter_1000                      | 6.5838 ns  |
+| hashmap_im_big/iter_5000                      | 6.3988 ns  |
+| hashmap_im_big/iter_10000                     | 6.1630 ns  |
+| ordmap_big/lookup_100                         | 11.435 µs |
+| ordmap_big/lookup_1000                        | 115.97 µs |
+| ordmap_big/lookup_5000                        | 935.39 µs |
+| ordmap_big/lookup_10000                       | 1.9507 ms  |
+| ordmap_big/lookup_one_100                     | 103.34 ns  |
+| ordmap_big/lookup_one_1000                    | 103.97 ns  |
+| ordmap_big/lookup_one_5000                    | 103.37 ns  |
+| ordmap_big/lookup_one_10000                   | 101.71 ns  |
+| ordmap_big/lookup_one_50000                   | 102.92 ns  |
+| ordmap_big/lookup_one_100000                  | 102.96 ns  |
+| ordmap_big/insert_100                         | 431.96 µs |
+| ordmap_big/insert_1000                        | 6.0183 ms  |
+| ordmap_big/insert_5000                        | 30.325 ms  |
+| ordmap_big/insert_10000                       | 64.232 ms  |
+| ordmap_big/insert_one_100                     | 4.3298 µs |
+| ordmap_big/insert_one_1000                    | 3.8997 µs |
+| ordmap_big/insert_one_5000                    | 4.3498 µs |
+| ordmap_big/insert_one_10000                   | 4.1184 µs |
+| ordmap_big/insert_mut_100                     | 125.40 µs |
+| ordmap_big/insert_mut_1000                    | 2.4052 ms  |
+| ordmap_big/insert_mut_5000                    | 13.126 ms  |
+| ordmap_big/insert_mut_10000                   | 26.922 ms  |
+| ordmap_big/reinsert_mut_one_100               | 742.39 ns  |
+| ordmap_big/reinsert_mut_one_1000              | 742.27 ns  |
+| ordmap_big/reinsert_mut_one_5000              | 760.47 ns  |
+| ordmap_big/reinsert_mut_one_10000             | 737.56 ns  |
+| ordmap_big/reinsert_mut_one_50000             | 752.74 ns  |
+| ordmap_big/reinsert_mut_one_100000            | 792.79 ns  |
+| ordmap_big/remove_100                         | 324.07 µs |
+| ordmap_big/remove_1000                        | 3.1751 ms  |
+| ordmap_big/remove_5000                        | 15.539 ms  |
+| ordmap_big/remove_10000                       | 33.316 ms  |
+| ordmap_big/remove_mut_100                     | 22.699 µs |
+| ordmap_big/remove_mut_1000                    | 190.76 µs |
+| ordmap_big/remove_mut_5000                    | 968.45 µs |
+| ordmap_big/remove_mut_10000                   | 1.8726 ms  |
+| ordmap_big/iter_100                           | 13.277 ns  |
+| ordmap_big/iter_1000                          | 13.181 ns  |
+| ordmap_big/iter_5000                          | 13.075 ns  |
+| ordmap_big/iter_10000                         | 12.882 ns  |
+| indexmap_im_specific_i64/get_index_100        | 197.56 ns  |
+| indexmap_im_specific_i64/first_100            | 1.0296 ns  |
+| indexmap_im_specific_i64/last_100             | 1.6279 ns  |
+| indexmap_im_specific_i64/get_index_1000       | 1.6329 µs |
+| indexmap_im_specific_i64/first_1000           | 1.7731 ns  |
+| indexmap_im_specific_i64/last_1000            | 2.5832 ns  |
+| indexmap_im_specific_i64/get_index_5000       | 7.9645 µs |
+| indexmap_im_specific_i64/first_5000           | 2.4099 ns  |
+| indexmap_im_specific_i64/last_5000            | 3.8439 ns  |
+| indexmap_im_specific_i64/get_index_10000      | 15.872 µs |
+| indexmap_im_specific_i64/first_10000          | 2.4101 ns  |
+| indexmap_im_specific_i64/last_10000           | 3.8213 ns  |
+| indexmap_im_specific_i64/get_index_50000      | 85.359 µs |
+| indexmap_im_specific_i64/first_50000          | 3.3255 ns  |
+| indexmap_im_specific_i64/last_50000           | 5.0754 ns  |
+| indexmap_im_specific_i64/get_index_100000     | 183.45 µs |
+| indexmap_im_specific_i64/first_100000         | 3.3311 ns  |
+| indexmap_im_specific_i64/last_100000          | 5.0534 ns  |
+| indexmap_im_specific_i64/get_index_500000     | 1.1513 ms  |
+| indexmap_im_specific_i64/first_500000         | 4.2679 ns  |
+| indexmap_im_specific_i64/last_500000          | 6.5324 ns  |
+| indexmap_im_specific_i64/get_index_1000000    | 3.4111 ms  |
+| indexmap_im_specific_i64/first_1000000        | 5.3895 ns  |
+| indexmap_im_specific_i64/last_1000000         | 8.3279 ns  |
+| indexmap_crate_specific_i64/get_index_100     | 3.2253 ns  |
+| indexmap_crate_specific_i64/first_100         | 229.99 ps  |
+| indexmap_crate_specific_i64/last_100          | 230.66 ps  |
+| indexmap_crate_specific_i64/get_index_1000    | 3.3279 ns  |
+| indexmap_crate_specific_i64/first_1000        | 235.74 ps  |
+| indexmap_crate_specific_i64/last_1000         | 237.04 ps  |
+| indexmap_crate_specific_i64/get_index_5000    | 3.2000 ns  |
+| indexmap_crate_specific_i64/first_5000        | 229.86 ps  |
+| indexmap_crate_specific_i64/last_5000         | 229.22 ps  |
+| indexmap_crate_specific_i64/get_index_10000   | 3.1915 ns  |
+| indexmap_crate_specific_i64/first_10000       | 230.39 ps  |
+| indexmap_crate_specific_i64/last_10000        | 229.60 ps  |
+| indexmap_crate_specific_i64/get_index_50000   | 3.2352 ns  |
+| indexmap_crate_specific_i64/first_50000       | 231.06 ps  |
+| indexmap_crate_specific_i64/last_50000        | 229.45 ps  |
+| indexmap_crate_specific_i64/get_index_100000  | 3.2378 ns  |
+| indexmap_crate_specific_i64/first_100000      | 235.56 ps  |
+| indexmap_crate_specific_i64/last_100000       | 233.66 ps  |
+| indexmap_crate_specific_i64/get_index_500000  | 3.2539 ns  |
+| indexmap_crate_specific_i64/first_500000      | 235.47 ps  |
+| indexmap_crate_specific_i64/last_500000       | 236.24 ps  |
+| indexmap_crate_specific_i64/get_index_1000000 | 3.2689 ns  |
+| indexmap_crate_specific_i64/first_1000000     | 232.04 ps  |
+| indexmap_crate_specific_i64/last_1000000      | 230.06 ps  |
 
 Scripts used to generate summaries: (nushell)
 ```nushell
@@ -501,20 +627,27 @@ let subtitles = {
     insert: "(linear) Time to create a map of size N by repeatedly inserting into it via immutable (cloned) updates",
     insert_one: "(constant) Given a map of size N, time to insert one element immutably (cloning the map before inserting)",
     insert_mut: "(linear) Time to create a map of size N by repeatedly inserting into it via mutable inserts",
-    reinsert_mut_one: "(constant) Given a map of size N, time to clone, remove mutably, and reinsert a key to the map.\n\nAs IndexMap tracks insertion order, it is the only one that ultimately produces a different (!=) result after the operation.",
+    reinsert_mut_one: "(constant) Given a map of size N, time to clone, remove mutably, and reinsert a key to the map.\n\nAs indexmaps track insertion order, they are the only ones that ultimately produce a different (!=) result after the operation.",
     remove: "(linear) Given a map of size N, time to drain all its items by repeatedly .remove() (that clones) in a random order",
-    remove_mut: "(linear) Given a map of size N, time to drain all its items by repeatedly calling .remove(), mutably, in a random order\n\nNote that `.drain()`ing the collection might be considerably faster",
+    remove_mut: "(linear) Given a map of size N, time to drain all its items by repeatedly calling .remove(), mutably, in a random order\n\nNote that `.drain()`ing the collection might be considerably faster. `indexmap_crate`'s big type appears much faster due to a highly optimized memcpy.",
     lookup: "(linear) Given a map of size N, time to lookup every one of its elements in a random order",
     lookup_one: "(constant) Given a map of size N, time to look up a single, random element",
-    iter: "(linear) Given a map of size N, time to iterate all its items in the default order by reference",
+    iter: "(linear) Given a map of size N, time to iterate all its items in the default order by reference\n\n`indexmap_crate` has a monstrously fast iteration due to backing its values in a linear array.",
+    get_index: "imbl-index and OrdMap do not support constant-time access by index"
 }
 
 $bench_times
-| insert timeval { |row| $row.time | str replace " s" " sec" | str replace -r '\s' '' | into duration }
+| insert timeval { |row|
+    $row.time
+    | str replace -r '([\d.]+) (\S+)' { |n, ty|
+        let d = if $ty != 'ps' { ($n | into float) * 1000 } else { $n };
+        $"-($d)(match $ty { ps => 'ns', s => 'sec', _ => $ty })"
+    } | into duration
+}
 | each { |row| $row | merge ($row.bench | parse -r '(?<struct>.+)_(?<cat>(?<dtype>...)/(?<test>.+?)_(?<batch>\d+))' | first) }
 | group-by test
 | values
-| where { let len = uniq-by struct | length; $len > 1 }
+| where { let len = uniq-by struct | length; $len > 2 }
 | sort-by { |rows| $rows.0.cat }
 | each { |rows|
     let test = $rows.0.test
@@ -522,10 +655,17 @@ $bench_times
     let displayrows = $rows | insert grouper { |r| $"($r.batch)-($r.dtype)" }
     | group-by grouper
     | update cells { |rows|
-        let fastest = $rows.timeval | math min;
+        let fastest = $rows.timeval | math max;
         let batch = $rows.0.batch;
         let dtype = $rows.0.dtype;
-        $rows | update time { |row| $"($row.time) \(($row.timeval / $fastest | math round -p 1)x\)" }
+
+        $rows | update time { |row|
+            $"(
+                $row.time | str replace µs us | str replace ' ' '' | str replace -r '(\d+\.\d{2})\d+' '$1'
+            ) \((
+                $row.timeval / $fastest | math round -p 1
+            )x\)"
+        }
         | select struct time
         | transpose --header-row
         | insert batch $batch
@@ -533,248 +673,282 @@ $bench_times
     }
     | values
     | flatten
-    | select dtype batch hashmap_std? hashmap_im? ordmap? indexmap?
+    | select dtype batch hashmap_std? hashmap_im? ordmap? indexmap_im? indexmap_crate?
     | update cells { default - }
 
     let subtitle = if $test in $subtitles { $"($subtitles | get $test)\n\n" } else { "" }
 
-    $"## ($test)\n($subtitle)($displayrows | to md --pretty)"
+    $"## ($test)\n($subtitle)($displayrows | to md --pretty)" | str replace -ar '(\d)us' '${1}µs'
 }
 | str join "\n\n"
 
 # For specific
 $bench_times
-| insert timeval { |row| $row.time | str replace " s" " sec" | str replace -r '\s' '' | into duration }
+| insert timeval { |row|
+    $row.time
+    | str replace -r '([\d.]+) (\S+)' { |n, ty|
+        let d = if $ty != 'ps' { ($n | into float) * 1000 } else { $n };
+        $"-($d)(match $ty { ps => 'ns', s => 'sec', _ => $ty })"
+    } | into duration
+}
 | each { |row| $row | merge ($row.bench | parse -r '(?<struct>.+)_(?<cat>(?<dtype>...)/(?<test>.+?)_(?<batch>\d+))' | first) }
 | group-by test
 | values
-| where { let len = uniq-by struct | length; $len == 1 }
+| where { let len = uniq-by struct | length; $len == 2 }
 | sort-by { |rows| $rows.0.cat }
 | each { |rows|
     let test = $rows.0.test
 
-    let displayrows = $rows | insert grouper { |r| $"($r.batch)-($r.dtype)" } | group-by grouper | update cells { |rows| let fastest = $rows.timeval | math min; let batch = $rows.0.batch; let dtype = $rows.0.dtype; $rows | update time { |row| $"($row.time) \(($row.timeval / $fastest | math round -p 1)x\)" } | select struct time | transpose --header-row | insert batch $batch | insert dtype $dtype } | values | flatten | select batch dtype indexmap_specific | rename batch dtype indexmap
+    let displayrows = $rows | insert grouper { |r| $"($r.batch)-($r.dtype)" }
+    | group-by grouper
+    | update cells { |rows|
+        let fastest = $rows.timeval | math max;
+        let batch = $rows.0.batch;
+        let dtype = $rows.0.dtype;
 
-    $"### ($test)\n($displayrows | to md --pretty)"
+        $rows | update time { |row|
+            $"(
+                $row.time | str replace µs us | str replace ' ' '' | str replace -r '(\d+\.\d{2})\d+' '$1'
+            ) \((
+                $row.timeval / $fastest | math round -p 1
+            )x\)"
+        }
+        | select struct time
+        | transpose --header-row
+        | insert batch $batch
+        | insert dtype $dtype
+    }
+    | values
+    | flatten
+    | select dtype batch indexmap_im_specific? indexmap_crate_specific?
+    | update cells { default - }
+
+    let subtitle = if $test in $subtitles { $"($subtitles | get $test)\n\n" } else { "" }
+
+    $"### ($test)\n($subtitle)($displayrows | to md --pretty)" | str replace -ar '(\d)us' '${1}µs'
 }
-| str join "\n\n
+| str join "\n\n"
 ```
 </details>
 
 ## insert
 (linear) Time to create a map of size N by repeatedly inserting into it via immutable (cloned) updates
 
-| dtype | batch | hashmap_std       | hashmap_im        | ordmap            | indexmap          |
-| ----- | ----- | ----------------- | ----------------- | ----------------- | ----------------- |
-| i64   | 100   | 8.0567 µs (1.0x) | 25.141 µs (3.1x) | 12.574 µs (1.6x) | 44.440 µs (5.5x) |
-| i64   | 1000  | 311.13 µs (1.2x) | 380.23 µs (1.5x) | 252.28 µs (1.0x) | 739.50 µs (2.9x) |
-| i64   | 5000  | -                 | 2.9101 ms (1.5x)  | 1.8961 ms (1.0x)  | 5.2003 ms (2.7x)  |
-| i64   | 10000 | -                 | 6.0241 ms (1.4x)  | 4.2308 ms (1.0x)  | 10.826 ms (2.6x)  |
-| str   | 100   | 379.87 µs (3.1x) | 121.57 µs (1.0x) | 131.72 µs (1.1x) | 188.23 µs (1.5x) |
-| str   | 1000  | 34.895 ms (19.2x) | 1.8211 ms (1.0x)  | 1.9043 ms (1.0x)  | 2.3437 ms (1.3x)  |
-| str   | 5000  | -                 | 9.0666 ms (1.0x)  | 11.479 ms (1.3x)  | 12.604 ms (1.4x)  |
-| str   | 10000 | -                 | 18.116 ms (1.0x)  | 25.308 ms (1.4x)  | 27.103 ms (1.5x)  |
-| big   | 100   | 263.09 µs (1.0x) | 3.2327 ms (12.3x) | 600.14 µs (2.3x) | 543.86 µs (2.1x) |
-| big   | 1000  | 3.5598 ms (1.0x)  | 31.886 ms (9.0x)  | 6.5770 ms (1.8x)  | 6.9731 ms (2.0x)  |
-| big   | 5000  | -                 | 271.17 ms (4.3x)  | 86.632 ms (1.4x)  | 63.175 ms (1.0x)  |
-| big   | 10000 | -                 | 669.62 ms (2.3x)  | 287.77 ms (1.0x)  | 352.30 ms (1.2x)  |
+| dtype | batch | hashmap_std     | hashmap_im      | ordmap          | indexmap_im     | indexmap_crate  |
+| ----- | ----- | --------------- | --------------- | --------------- | --------------- | --------------- |
+| i64   | 100   | 8.49µs (1.0x)   | 25.90µs (3.0x)  | 12.72µs (1.5x)  | 42.38µs (5.0x)  | 19.57µs (2.3x)  |
+| i64   | 1000  | 300.90µs (1.2x) | 377.55µs (1.5x) | 250.13µs (1.0x) | 696.94µs (2.8x) | 833.47µs (3.3x) |
+| i64   | 5000  | -               | 2.89ms (1.6x)   | 1.84ms (1.0x)   | 5.15ms (2.8x)   | -               |
+| i64   | 10000 | -               | 5.99ms (1.4x)   | 4.36ms (1.0x)   | 10.72ms (2.5x)  | -               |
+| str   | 100   | 408.29µs (3.6x) | 114.73µs (1.0x) | 115.00µs (1.0x) | 196.12µs (1.7x) | 371.48µs (3.2x) |
+| str   | 1000  | 38.06ms (21.7x) | 1.76ms (1.0x)   | 1.75ms (1.0x)   | 2.40ms (1.4x)   | 32.73ms (18.6x) |
+| str   | 5000  | -               | 8.75ms (1.0x)   | 10.95ms (1.3x)  | 13.13ms (1.5x)  | -               |
+| str   | 10000 | -               | 17.98ms (1.0x)  | 25.91ms (1.4x)  | 27.99ms (1.6x)  | -               |
+| big   | 100   | 207.97µs (1.1x) | 1.42ms (7.4x)   | 431.96µs (2.2x) | 557.51µs (2.9x) | 193.64µs (1.0x) |
+| big   | 1000  | 3.33ms (1.1x)   | 15.14ms (4.8x)  | 6.01ms (1.9x)   | 7.18ms (2.3x)   | 3.15ms (1.0x)   |
+| big   | 5000  | -               | 75.53ms (2.5x)  | 30.32ms (1.0x)  | 36.84ms (1.2x)  | -               |
+| big   | 10000 | -               | 151.50ms (2.4x) | 64.23ms (1.0x)  | 71.60ms (1.1x)  | -               |
 
 ## insert_mut
 (linear) Time to create a map of size N by repeatedly inserting into it via mutable inserts
 
-| dtype | batch | hashmap_std       | hashmap_im        | ordmap            | indexmap          |
-| ----- | ----- | ----------------- | ----------------- | ----------------- | ----------------- |
-| i64   | 100   | 3.2507 µs (1.0x) | 3.4218 µs (1.1x) | 3.1733 µs (1.0x) | 7.6923 µs (2.4x) |
-| i64   | 1000  | 39.664 µs (1.0x) | 46.224 µs (1.2x) | 46.225 µs (1.2x) | 109.36 µs (2.8x) |
-| i64   | 5000  | 182.11 µs (1.0x) | 193.98 µs (1.1x) | 331.52 µs (1.8x) | 559.90 µs (3.1x) |
-| i64   | 10000 | 364.90 µs (1.1x) | 342.06 µs (1.0x) | 721.44 µs (2.1x) | 1.1089 ms (3.2x)  |
-| str   | 100   | 12.189 µs (1.0x) | 12.138 µs (1.0x) | 13.780 µs (1.1x) | 24.468 µs (2.0x) |
-| str   | 1000  | 135.24 µs (1.0x) | 145.59 µs (1.1x) | 164.49 µs (1.2x) | 279.54 µs (2.1x) |
-| str   | 5000  | 661.03 µs (1.0x) | 720.02 µs (1.1x) | 944.96 µs (1.4x) | 1.4756 ms (2.2x)  |
-| str   | 10000 | 1.4271 ms (1.0x)  | 1.4145 ms (1.0x)  | 1.9325 ms (1.4x)  | 3.0149 ms (2.1x)  |
-| big   | 100   | 197.65 µs (1.0x) | 264.22 µs (1.3x) | 200.79 µs (1.0x) | 216.70 µs (1.1x) |
-| big   | 1000  | 2.6993 ms (1.1x)  | 3.0612 ms (1.3x)  | 2.3980 ms (1.0x)  | 3.3218 ms (1.4x)  |
-| big   | 5000  | 24.665 ms (1.4x)  | 19.055 ms (1.1x)  | 17.611 ms (1.0x)  | 22.296 ms (1.3x)  |
-| big   | 10000 | 80.239 ms (1.7x)  | 46.001 ms (1.0x)  | 63.231 ms (1.4x)  | 69.266 ms (1.5x)  |
+| dtype | batch | hashmap_std     | hashmap_im      | ordmap          | indexmap_im     | indexmap_crate  |
+| ----- | ----- | --------------- | --------------- | --------------- | --------------- | --------------- |
+| i64   | 100   | 3.52µs (1.1x)   | 3.49µs (1.1x)   | 3.17µs (1.0x)   | 7.46µs (2.3x)   | 3.75µs (1.2x)   |
+| i64   | 1000  | 40.57µs (1.1x)  | 47.48µs (1.3x)  | 45.72µs (1.3x)  | 106.94µs (3.0x) | 35.59µs (1.0x)  |
+| i64   | 5000  | 179.58µs (1.1x) | 197.35µs (1.2x) | 331.64µs (2.1x) | 555.26µs (3.5x) | 160.58µs (1.0x) |
+| i64   | 10000 | 369.42µs (1.1x) | 353.21µs (1.1x) | 725.69µs (2.2x) | 1.08ms (3.3x)   | 327.58µs (1.0x) |
+| str   | 100   | 13.04µs (1.1x)  | 12.33µs (1.1x)  | 13.11µs (1.1x)  | 22.19µs (1.9x)  | 11.61µs (1.0x)  |
+| str   | 1000  | 156.99µs (1.3x) | 148.37µs (1.2x) | 189.28µs (1.5x) | 253.57µs (2.1x) | 122.75µs (1.0x) |
+| str   | 5000  | 792.94µs (1.3x) | 740.86µs (1.2x) | 1.25ms (2.0x)   | 1.34ms (2.2x)   | 613.74µs (1.0x) |
+| str   | 10000 | 2.08ms (1.5x)   | 1.40ms (1.0x)   | 2.81ms (2.1x)   | 2.80ms (2.1x)   | 1.34ms (1.0x)   |
+| big   | 100   | 151.82µs (1.2x) | 198.40µs (1.6x) | 125.40µs (1.0x) | 220.85µs (1.8x) | 149.96µs (1.2x) |
+| big   | 1000  | 2.79ms (1.2x)   | 2.98ms (1.2x)   | 2.40ms (1.0x)   | 5.34ms (2.2x)   | 2.74ms (1.1x)   |
+| big   | 5000  | 14.81ms (1.1x)  | 15.76ms (1.2x)  | 13.12ms (1.0x)  | 27.60ms (2.1x)  | 14.54ms (1.1x)  |
+| big   | 10000 | 30.24ms (1.1x)  | 32.38ms (1.2x)  | 26.92ms (1.0x)  | 35.99ms (1.3x)  | 29.84ms (1.1x)  |
 
 ## insert_one
 (constant) Given a map of size N, time to insert one element immutably (cloning the map before inserting)
 
-| dtype | batch | hashmap_std        | hashmap_im        | ordmap            | indexmap          |
-| ----- | ----- | ------------------ | ----------------- | ----------------- | ----------------- |
-| i64   | 100   | 233.15 ns (1.0x)   | 525.48 ns (2.3x)  | 279.45 ns (1.2x)  | 927.15 ns (4.0x)  |
-| i64   | 1000  | 2.5858 µs (5.0x)  | 915.39 ns (1.8x)  | 520.44 ns (1.0x)  | 1.5553 µs (3.0x) |
-| i64   | 5000  | -                  | 998.19 ns (1.4x)  | 739.98 ns (1.0x)  | 1.8646 µs (2.5x) |
-| i64   | 10000 | -                  | 992.82 ns (1.1x)  | 875.45 ns (1.0x)  | 1.9254 µs (2.2x) |
-| str   | 100   | 9.4765 µs (6.5x)  | 1.4683 µs (1.0x) | 1.7844 µs (1.2x) | 2.5682 µs (1.7x) |
-| str   | 1000  | 102.70 µs (40.0x) | 2.7807 µs (1.1x) | 2.5660 µs (1.0x) | 3.8403 µs (1.5x) |
-| str   | 5000  | -                  | 2.1140 µs (1.0x) | 3.3604 µs (1.6x) | 3.7564 µs (1.8x) |
-| str   | 10000 | -                  | 2.4953 µs (1.0x) | 3.4313 µs (1.4x) | 4.0194 µs (1.6x) |
-| big   | 100   | 20.974 µs (4.0x)  | 37.076 µs (7.0x) | 5.2731 µs (1.0x) | 19.549 µs (3.7x) |
-| big   | 1000  | 68.891 µs (12.9x) | 35.369 µs (6.6x) | 5.3469 µs (1.0x) | 19.130 µs (3.6x) |
-| big   | 5000  | -                  | 84.775 µs (2.7x) | 31.370 µs (1.0x) | 43.709 µs (1.4x) |
-| big   | 10000 | -                  | 80.641 µs (1.7x) | 47.451 µs (1.0x) | 63.913 µs (1.3x) |
+| dtype | batch | hashmap_std     | hashmap_im      | ordmap          | indexmap_im     | indexmap_crate  |
+| ----- | ----- | --------------- | --------------- | --------------- | --------------- | --------------- |
+| i64   | 100   | 80.59ns (1.0x)  | 293.94ns (3.6x) | 157.97ns (2.0x) | 312.90ns (3.9x) | 202.35ns (2.5x) |
+| i64   | 1000  | 806.92ns (3.0x) | 597.01ns (2.2x) | 272.01ns (1.0x) | 625.93ns (2.3x) | 1.55µs (5.7x)   |
+| i64   | 5000  | -               | 540.55ns (1.4x) | 394.37ns (1.0x) | 720.41ns (1.8x) | -               |
+| i64   | 10000 | -               | 538.76ns (1.3x) | 420.76ns (1.0x) | 911.57ns (2.2x) | -               |
+| str   | 100   | 8.01µs (7.0x)   | 1.14µs (1.0x)   | 1.61µs (1.4x)   | 1.56µs (1.4x)   | 7.89µs (6.9x)   |
+| str   | 1000  | 78.59µs (35.2x) | 2.35µs (1.1x)   | 2.23µs (1.0x)   | 2.27µs (1.0x)   | 78.58µs (35.1x) |
+| str   | 5000  | -               | 1.72µs (1.0x)   | 2.93µs (1.7x)   | 2.21µs (1.3x)   | -               |
+| str   | 10000 | -               | 2.01µs (1.0x)   | 3.07µs (1.5x)   | 2.60µs (1.3x)   | -               |
+| big   | 100   | 3.33µs (2.0x)   | 13.27µs (8.1x)  | 4.32µs (2.6x)   | 4.97µs (3.0x)   | 1.64µs (1.0x)   |
+| big   | 1000  | 3.37µs (2.1x)   | 13.60µs (8.3x)  | 3.89µs (2.4x)   | 4.60µs (2.8x)   | 1.64µs (1.0x)   |
+| big   | 5000  | -               | 13.21µs (3.0x)  | 4.34µs (1.0x)   | 5.05µs (1.2x)   | -               |
+| big   | 10000 | -               | 13.31µs (3.2x)  | 4.11µs (1.0x)   | 4.71µs (1.1x)   | -               |
 
 ## iter
 (linear) Given a map of size N, time to iterate all its items in the default order by reference
 
-| dtype | batch | hashmap_std       | hashmap_im         | ordmap            | indexmap          |
-| ----- | ----- | ----------------- | ------------------ | ----------------- | ----------------- |
-| i64   | 100   | 72.652 ns (1.0x)  | 412.42 ns (5.7x)   | 373.56 ns (5.2x)  | 365.04 ns (5.1x)  |
-| i64   | 1000  | 713.17 ns (1.0x)  | 4.9301 µs (6.9x)  | 3.5718 µs (5.0x) | 3.5792 µs (5.0x) |
-| i64   | 5000  | 4.1492 µs (1.0x) | 25.622 µs (6.2x)  | 18.079 µs (4.4x) | 16.670 µs (4.0x) |
-| i64   | 10000 | 9.5853 µs (1.0x) | 45.138 µs (4.7x)  | 35.971 µs (3.8x) | 33.166 µs (3.5x) |
-| str   | 100   | 95.154 ns (1.0x)  | 472.35 ns (5.0x)   | 350.50 ns (3.7x)  | 357.38 ns (3.8x)  |
-| str   | 1000  | 958.07 ns (1.0x)  | 5.3049 µs (5.5x)  | 3.2479 µs (3.4x) | 3.2336 µs (3.4x) |
-| str   | 5000  | 4.9830 µs (1.0x) | 34.319 µs (6.9x)  | 15.930 µs (3.2x) | 16.157 µs (3.2x) |
-| str   | 10000 | 11.094 µs (1.0x) | 55.219 µs (5.0x)  | 32.629 µs (2.9x) | 32.394 µs (2.9x) |
-| big   | 100   | 2.3706 ns (1.0x)  | 6.2090 ns (3.0x)   | 11.480 ns (5.5x)  | 12.834 ns (6.0x)  |
-| big   | 1000  | 28.152 ns (4.7x)  | 6.3539 ns (1.0x)   | 11.590 ns (1.8x)  | 12.865 ns (2.0x)  |
-| big   | 5000  | 811.15 ns (1.0x)  | 5.7284 µs (7.1x)  | 3.2357 µs (4.0x) | 3.1720 µs (3.9x) |
-| big   | 10000 | 4.2559 µs (1.0x) | 75.595 µs (17.8x) | 22.375 µs (5.3x) | 21.011 µs (4.9x) |
+`indexmap_crate` has a monstrously fast iteration due to backing its values in a linear array.
+
+| dtype | batch | hashmap_std       | hashmap_im       | ordmap           | indexmap_im      | indexmap_crate  |
+| ----- | ----- | ----------------- | ---------------- | ---------------- | ---------------- | --------------- |
+| i64   | 100   | 70.62ns (2.5x)    | 473.48ns (17.0x) | 373.98ns (13.4x) | 356.32ns (12.8x) | 27.90ns (1.0x)  |
+| i64   | 1000  | 712.67ns (3.0x)   | 5.17µs (21.9x)   | 3.49µs (14.8x)   | 3.16µs (13.4x)   | 236.26ns (1.0x) |
+| i64   | 5000  | 3.74µs (3.2x)     | 26.54µs (22.6x)  | 17.80µs (15.1x)  | 15.91µs (13.5x)  | 1.17µs (1.0x)   |
+| i64   | 10000 | 8.90µs (3.8x)     | 48.02µs (20.7x)  | 35.40µs (15.3x)  | 31.80µs (13.7x)  | 2.32µs (1.0x)   |
+| str   | 100   | 98.36ns (2.2x)    | 429.25ns (9.5x)  | 362.36ns (8.1x)  | 373.05ns (8.3x)  | 45.00ns (1.0x)  |
+| str   | 1000  | 1.00µs (2.3x)     | 4.64µs (10.4x)   | 3.36µs (7.5x)    | 3.38µs (7.6x)    | 446.07ns (1.0x) |
+| str   | 5000  | 5.49µs (2.4x)     | 33.94µs (15.0x)  | 17.02µs (7.5x)   | 17.29µs (7.6x)   | 2.26µs (1.0x)   |
+| str   | 10000 | 12.34µs (2.7x)    | 55.19µs (12.2x)  | 34.00µs (7.5x)   | 33.29µs (7.3x)   | 4.53µs (1.0x)   |
+| big   | 100   | 2.29ns (5.0x)     | 6.50ns (14.1x)   | 13.27ns (28.8x)  | 11.71ns (25.4x)  | 461.93ps (1.0x) |
+| big   | 1000  | 31.81ns (67.1x)   | 6.58ns (13.9x)   | 13.18ns (27.8x)  | 12.16ns (25.7x)  | 474.42ps (1.0x) |
+| big   | 5000  | 110.15ns (234.9x) | 6.39ns (13.6x)   | 13.07ns (27.9x)  | 11.92ns (25.4x)  | 469.16ps (1.0x) |
+| big   | 10000 | 259.02ns (563.1x) | 6.16ns (13.4x)   | 12.88ns (28.0x)  | 11.84ns (25.7x)  | 460.85ps (1.0x) |
 
 ## lookup
 (linear) Given a map of size N, time to lookup every one of its elements in a random order
 
-| dtype | batch | hashmap_std       | hashmap_im        | ordmap            | indexmap          |
-| ----- | ----- | ----------------- | ----------------- | ----------------- | ----------------- |
-| i64   | 100   | 1.1313 µs (1.1x) | 1.2196 µs (1.2x) | 1.0368 µs (1.0x) | 2.2112 µs (2.1x) |
-| i64   | 1000  | 11.145 µs (1.0x) | 12.789 µs (1.1x) | 19.349 µs (1.7x) | 35.510 µs (3.2x) |
-| i64   | 5000  | -                 | 72.025 µs (1.0x) | 144.60 µs (2.0x) | 352.27 µs (4.9x) |
-| i64   | 10000 | -                 | 158.11 µs (1.0x) | 330.26 µs (2.1x) | 843.33 µs (5.3x) |
-| str   | 100   | 2.0452 µs (1.0x) | 2.1798 µs (1.1x) | 3.1029 µs (1.5x) | 3.0650 µs (1.5x) |
-| str   | 1000  | 22.240 µs (1.0x) | 29.428 µs (1.3x) | 79.484 µs (3.6x) | 54.386 µs (2.4x) |
-| str   | 5000  | -                 | 213.91 µs (1.0x) | 653.35 µs (3.1x) | 480.04 µs (2.2x) |
-| str   | 10000 | -                 | 458.73 µs (1.0x) | 1.5351 ms (3.3x)  | 1.0883 ms (2.4x)  |
-| big   | 100   | 81.331 µs (7.1x) | 79.810 µs (7.0x) | 11.472 µs (1.0x) | 80.410 µs (7.0x) |
-| big   | 1000  | 825.56 µs (7.0x) | 801.59 µs (6.8x) | 117.55 µs (1.0x) | 809.99 µs (6.9x) |
-| big   | 5000  | -                 | 4.3529 ms (1.6x)  | 2.6823 ms (1.0x)  | 4.5495 ms (1.7x)  |
-| big   | 10000 | -                 | 10.374 ms (1.0x)  | 15.273 ms (1.5x)  | 11.623 ms (1.1x)  |
+| dtype | batch | hashmap_std     | hashmap_im      | ordmap          | indexmap_im     | indexmap_crate  |
+| ----- | ----- | --------------- | --------------- | --------------- | --------------- | --------------- |
+| i64   | 100   | 1.16µs (1.1x)   | 1.24µs (1.2x)   | 1.06µs (1.0x)   | 2.21µs (2.1x)   | 1.64µs (1.5x)   |
+| i64   | 1000  | 11.45µs (1.0x)  | 13.58µs (1.2x)  | 19.53µs (1.7x)  | 36.20µs (3.2x)  | 18.83µs (1.6x)  |
+| i64   | 5000  | 60.14µs (1.0x)  | 73.62µs (1.2x)  | 144.08µs (2.4x) | 351.47µs (5.8x) | 102.79µs (1.7x) |
+| i64   | 10000 | 118.40µs (1.0x) | 173.06µs (1.5x) | 336.52µs (2.8x) | 822.60µs (6.9x) | 228.51µs (1.9x) |
+| str   | 100   | 1.79µs (1.0x)   | 2.24µs (1.2x)   | 3.06µs (1.7x)   | 4.29µs (2.4x)   | 2.04µs (1.1x)   |
+| str   | 1000  | 19.24µs (1.0x)  | 31.21µs (1.6x)  | 74.62µs (3.9x)  | 67.25µs (3.5x)  | 24.47µs (1.3x)  |
+| str   | 5000  | 152.79µs (1.0x) | 218.35µs (1.4x) | 631.07µs (4.1x) | 532.15µs (3.5x) | 209.45µs (1.4x) |
+| str   | 10000 | 343.90µs (1.0x) | 511.94µs (1.5x) | 1.50ms (4.4x)   | 1.19ms (3.5x)   | 487.99µs (1.4x) |
+| big   | 100   | 80.88µs (7.1x)  | 80.32µs (7.0x)  | 11.43µs (1.0x)  | 82.19µs (7.2x)  | 11.41µs (1.0x)  |
+| big   | 1000  | 822.07µs (7.1x) | 805.17µs (6.9x) | 115.97µs (1.0x) | 822.32µs (7.1x) | 117.76µs (1.0x) |
+| big   | 5000  | 4.12ms (4.5x)   | 4.06ms (4.4x)   | 935.39µs (1.0x) | 4.17ms (4.6x)   | 914.51µs (1.0x) |
+| big   | 10000 | 8.46ms (4.5x)   | 8.22ms (4.3x)   | 1.95ms (1.0x)   | 8.34ms (4.4x)   | 1.90ms (1.0x)   |
 
 ## lookup_one
 (constant) Given a map of size N, time to look up a single, random element
 
-| dtype | batch  | hashmap_std      | hashmap_im       | ordmap            | indexmap         |
-| ----- | ------ | ---------------- | ---------------- | ----------------- | ---------------- |
-| i64   | 100    | 11.213 ns (1.2x) | 12.904 ns (1.3x) | 9.6837 ns (1.0x)  | 23.071 ns (2.6x) |
-| i64   | 1000   | 11.154 ns (1.0x) | 13.386 ns (1.2x) | 17.228 ns (1.5x)  | 33.585 ns (3.0x) |
-| i64   | 5000   | 11.152 ns (1.0x) | 13.632 ns (1.2x) | 23.092 ns (2.1x)  | 41.951 ns (3.7x) |
-| i64   | 10000  | 11.140 ns (1.0x) | 13.768 ns (1.2x) | 26.401 ns (2.4x)  | 44.634 ns (4.0x) |
-| i64   | 50000  | 11.161 ns (1.0x) | 13.874 ns (1.2x) | 33.863 ns (3.0x)  | 52.835 ns (4.7x) |
-| i64   | 100000 | 11.214 ns (1.0x) | 14.326 ns (1.3x) | 37.796 ns (3.4x)  | 54.579 ns (4.9x) |
-| str   | 100    | 20.653 ns (1.0x) | 21.164 ns (1.1x) | 29.764 ns (1.5x)  | 30.792 ns (1.5x) |
-| str   | 1000   | 20.553 ns (1.0x) | 21.569 ns (1.1x) | 44.121 ns (2.2x)  | 41.655 ns (2.1x) |
-| str   | 5000   | 20.935 ns (1.0x) | 22.403 ns (1.1x) | 54.501 ns (2.7x)  | 48.936 ns (2.4x) |
-| str   | 10000  | 20.572 ns (1.0x) | 22.387 ns (1.1x) | 58.974 ns (2.9x)  | 54.372 ns (2.7x) |
-| str   | 50000  | 21.068 ns (1.0x) | 23.220 ns (1.1x) | 66.836 ns (3.1x)  | 59.495 ns (2.8x) |
-| str   | 100000 | 20.583 ns (1.0x) | 23.307 ns (1.2x) | 72.613 ns (3.6x)  | 61.018 ns (3.1x) |
-| big   | 100    | 827.09 ns (8.4x) | 796.61 ns (8.0x) | 99.276 ns (1.0x)  | 806.92 ns (8.1x) |
-| big   | 1000   | 810.70 ns (8.3x) | 796.57 ns (8.1x) | 98.506 ns (1.0x)  | 819.77 ns (8.4x) |
-| big   | 5000   | 810.42 ns (3.0x) | 802.59 ns (3.0x) | 270.34 ns (1.0x)  | 828.08 ns (3.1x) |
-| big   | 10000  | 826.26 ns (1.1x) | 806.33 ns (1.1x) | 745.11 ns (1.0x)  | 834.79 ns (1.1x) |
-| big   | 50000  | 822.01 ns (1.0x) | 802.34 ns (1.0x) | 1.0473 µs (1.3x) | 847.91 ns (1.1x) |
-| big   | 100000 | 843.61 ns (1.0x) | 808.42 ns (1.0x) | 1.1715 µs (1.4x) | 847.40 ns (1.0x) |
+| dtype | batch  | hashmap_std     | hashmap_im      | ordmap          | indexmap_im     | indexmap_crate  |
+| ----- | ------ | --------------- | --------------- | --------------- | --------------- | --------------- |
+| i64   | 100    | 14.05ns (1.0x)  | 16.42ns (1.2x)  | 14.46ns (1.0x)  | 41.02ns (2.9x)  | 17.73ns (1.3x)  |
+| i64   | 1000   | 14.11ns (1.0x)  | 22.37ns (1.6x)  | 23.37ns (1.7x)  | 58.83ns (4.2x)  | 18.12ns (1.3x)  |
+| i64   | 5000   | 14.70ns (1.0x)  | 19.37ns (1.3x)  | 31.08ns (2.1x)  | 77.55ns (5.3x)  | 20.09ns (1.4x)  |
+| i64   | 10000  | 15.87ns (1.0x)  | 20.72ns (1.3x)  | 37.53ns (2.4x)  | 92.41ns (5.8x)  | 24.62ns (1.6x)  |
+| i64   | 50000  | 23.69ns (1.0x)  | 38.25ns (1.6x)  | 58.59ns (2.5x)  | 148.94ns (6.3x) | 46.91ns (2.0x)  |
+| i64   | 100000 | 27.94ns (1.0x)  | 46.29ns (1.7x)  | 68.43ns (2.4x)  | 180.91ns (6.5x) | 53.73ns (1.9x)  |
+| str   | 100    | 23.21ns (1.0x)  | 24.69ns (1.1x)  | 52.88ns (2.3x)  | 49.33ns (2.1x)  | 26.08ns (1.1x)  |
+| str   | 1000   | 25.79ns (1.0x)  | 34.13ns (1.3x)  | 86.76ns (3.4x)  | 72.45ns (2.8x)  | 28.90ns (1.1x)  |
+| str   | 5000   | 46.69ns (1.0x)  | 48.00ns (1.1x)  | 134.37ns (3.0x) | 105.43ns (2.3x) | 45.25ns (1.0x)  |
+| str   | 10000  | 51.47ns (1.0x)  | 53.71ns (1.0x)  | 162.04ns (3.1x) | 116.85ns (2.3x) | 54.77ns (1.1x)  |
+| str   | 50000  | 79.63ns (1.0x)  | 108.68ns (1.4x) | 252.93ns (3.2x) | 277.92ns (3.5x) | 127.42ns (1.6x) |
+| str   | 100000 | 199.56ns (1.2x) | 205.23ns (1.2x) | 391.94ns (2.3x) | 409.19ns (2.4x) | 168.36ns (1.0x) |
+| big   | 100    | 812.92ns (8.0x) | 808.74ns (8.0x) | 103.34ns (1.0x) | 807.03ns (8.0x) | 101.38ns (1.0x) |
+| big   | 1000   | 824.92ns (8.0x) | 800.36ns (7.8x) | 103.97ns (1.0x) | 825.16ns (8.0x) | 103.02ns (1.0x) |
+| big   | 5000   | 801.40ns (7.8x) | 802.26ns (7.8x) | 103.37ns (1.0x) | 812.10ns (7.9x) | 102.24ns (1.0x) |
+| big   | 10000  | 802.99ns (7.9x) | 794.94ns (7.8x) | 101.71ns (1.0x) | 808.05ns (7.9x) | 101.81ns (1.0x) |
+| big   | 50000  | 797.28ns (7.7x) | 798.10ns (7.8x) | 102.92ns (1.0x) | 810.77ns (7.9x) | 104.39ns (1.0x) |
+| big   | 100000 | 802.95ns (7.8x) | 807.45ns (7.9x) | 102.96ns (1.0x) | 821.06ns (8.0x) | 102.66ns (1.0x) |
 
 ## reinsert_mut_one
 (constant) Given a map of size N, time to clone, remove mutably, and reinsert a key to the map.
 
-As IndexMap tracks insertion order, it is the only one that ultimately produces a different (!=) result after the operation.
+As indexmaps track insertion order, they are the only ones that ultimately produce a different (!=) result after the operation.
 
-| dtype | batch  | hashmap_std       | hashmap_im         | ordmap            | indexmap           |
-| ----- | ------ | ----------------- | ------------------ | ----------------- | ------------------ |
-| i64   | 100    | 38.032 ns (1.0x)  | 49.202 ns (1.3x)   | 73.400 ns (1.9x)  | 143.85 ns (3.8x)   |
-| i64   | 1000   | 32.707 ns (1.0x)  | 73.991 ns (2.3x)   | 112.90 ns (3.5x)  | 213.81 ns (6.7x)   |
-| i64   | 5000   | 36.044 ns (1.0x)  | 72.559 ns (2.0x)   | 124.17 ns (3.4x)  | 235.55 ns (6.5x)   |
-| i64   | 10000  | 38.546 ns (1.0x)  | 65.405 ns (1.7x)   | 133.14 ns (3.5x)  | 252.18 ns (6.6x)   |
-| i64   | 50000  | 53.511 ns (1.0x)  | 125.47 ns (2.4x)   | 177.66 ns (3.3x)  | 392.75 ns (7.4x)   |
-| i64   | 100000 | 61.325 ns (1.0x)  | 127.28 ns (2.1x)   | 205.23 ns (3.4x)  | 459.31 ns (7.5x)   |
-| str   | 100    | 97.538 ns (1.0x)  | 140.52 ns (1.4x)   | 175.79 ns (1.8x)  | 349.74 ns (3.6x)   |
-| str   | 1000   | 95.362 ns (1.0x)  | 171.91 ns (1.8x)   | 279.77 ns (2.9x)  | 452.70 ns (4.8x)   |
-| str   | 5000   | 116.50 ns (1.0x)  | 185.31 ns (1.6x)   | 376.85 ns (3.2x)  | 514.14 ns (4.4x)   |
-| str   | 10000  | 123.62 ns (1.0x)  | 200.74 ns (1.6x)   | 421.07 ns (3.4x)  | 687.49 ns (5.6x)   |
-| str   | 50000  | 166.37 ns (1.0x)  | 364.20 ns (2.2x)   | 622.21 ns (3.7x)  | 1.6078 µs (9.7x)  |
-| str   | 100000 | 270.89 ns (1.0x)  | 503.41 ns (1.9x)   | 830.81 ns (3.1x)  | 1.7296 µs (6.4x)  |
-| big   | 100    | 1.7852 µs (2.0x) | 1.9416 µs (2.2x)  | 876.28 ns (1.0x)  | 3.1892 µs (3.6x)  |
-| big   | 1000   | 1.7822 µs (2.0x) | 1.9076 µs (2.1x)  | 894.76 ns (1.0x)  | 3.1655 µs (3.5x)  |
-| big   | 5000   | 2.0267 µs (1.0x) | 2.7859 µs (1.4x)  | 2.7872 µs (1.4x) | 7.9692 µs (3.9x)  |
-| big   | 10000  | 2.5829 µs (1.0x) | 3.3898 µs (1.3x)  | 5.6768 µs (2.2x) | 9.9066 µs (3.8x)  |
-| big   | 50000  | 2.7928 µs (1.0x) | 44.432 µs (15.9x) | 7.5608 µs (2.7x) | 18.632 µs (6.7x)  |
-| big   | 100000 | 2.8155 µs (1.0x) | 25.509 µs (9.1x)  | 7.8761 µs (2.8x) | 28.986 µs (10.3x) |
+| dtype | batch  | hashmap_std     | hashmap_im      | ordmap          | indexmap_im     | indexmap_crate     |
+| ----- | ------ | --------------- | --------------- | --------------- | --------------- | ------------------ |
+| i64   | 100    | 43.71ns (1.0x)  | 54.24ns (1.2x)  | 74.40ns (1.7x)  | 145.14ns (3.3x) | 188.44ns (4.3x)    |
+| i64   | 1000   | 37.02ns (1.0x)  | 79.05ns (2.1x)  | 102.85ns (2.8x) | 216.73ns (5.9x) | 901.06ns (24.3x)   |
+| i64   | 5000   | 38.96ns (1.0x)  | 66.98ns (1.7x)  | 124.71ns (3.2x) | 232.90ns (6.0x) | 5.39µs (138.4x)    |
+| i64   | 10000  | 40.86ns (1.0x)  | 67.34ns (1.6x)  | 136.92ns (3.4x) | 253.31ns (6.2x) | 12.66µs (309.9x)   |
+| i64   | 50000  | 55.44ns (1.0x)  | 127.94ns (2.3x) | 173.87ns (3.1x) | 422.88ns (7.6x) | 91.87µs (1657.2x)  |
+| i64   | 100000 | 62.90ns (1.0x)  | 128.00ns (2.0x) | 189.81ns (3.0x) | 521.35ns (8.3x) | 229.46µs (3647.8x) |
+| str   | 100    | 102.47ns (1.0x) | 129.20ns (1.3x) | 168.47ns (1.6x) | 325.14ns (3.2x) | 280.08ns (2.7x)    |
+| str   | 1000   | 101.76ns (1.0x) | 157.79ns (1.6x) | 266.07ns (2.6x) | 426.81ns (4.2x) | 1.24µs (12.2x)     |
+| str   | 5000   | 131.88ns (1.0x) | 175.89ns (1.3x) | 360.05ns (2.7x) | 482.78ns (3.7x) | 6.77µs (51.3x)     |
+| str   | 10000  | 126.48ns (1.0x) | 181.79ns (1.4x) | 401.13ns (3.2x) | 515.00ns (4.1x) | 15.54µs (122.9x)   |
+| str   | 50000  | 340.05ns (1.0x) | 422.89ns (1.2x) | 578.33ns (1.7x) | 1.17µs (3.5x)   | 160.30µs (471.4x)  |
+| str   | 100000 | 371.47ns (1.0x) | 544.64ns (1.5x) | 799.62ns (2.2x) | 1.39µs (3.7x)   | 351.00µs (944.9x)  |
+| big   | 100    | 1.78µs (2.4x)   | 1.96µs (2.6x)   | 742.39ns (1.0x) | 3.20µs (4.3x)   | 1.54µs (2.1x)      |
+| big   | 1000   | 1.76µs (2.4x)   | 1.97µs (2.7x)   | 742.27ns (1.0x) | 3.31µs (4.5x)   | 1.54µs (2.1x)      |
+| big   | 5000   | 1.76µs (2.3x)   | 1.98µs (2.6x)   | 760.47ns (1.0x) | 3.17µs (4.2x)   | 1.54µs (2.0x)      |
+| big   | 10000  | 1.83µs (2.5x)   | 1.94µs (2.6x)   | 737.56ns (1.0x) | 3.20µs (4.3x)   | 3.59µs (4.9x)      |
+| big   | 50000  | 1.78µs (2.4x)   | 1.95µs (2.6x)   | 752.74ns (1.0x) | 3.19µs (4.2x)   | 3.57µs (4.7x)      |
+| big   | 100000 | 1.74µs (2.2x)   | 4.20µs (5.3x)   | 792.79ns (1.0x) | 3.22µs (4.1x)   | 3.60µs (4.5x)      |
 
 ## remove
 (linear) Given a map of size N, time to drain all its items by repeatedly .remove() (that clones) in a random order
 
-| dtype | batch | hashmap_std       | hashmap_im        | ordmap            | indexmap          |
-| ----- | ----- | ----------------- | ----------------- | ----------------- | ----------------- |
-| i64   | 100   | 7.5556 µs (1.0x) | 23.082 µs (3.1x) | 13.661 µs (1.8x) | 39.084 µs (5.2x) |
-| i64   | 1000  | 952.30 µs (3.6x) | 457.65 µs (1.7x) | 262.40 µs (1.0x) | 786.99 µs (3.0x) |
-| i64   | 5000  | -                 | 3.1237 ms (1.6x)  | 1.8936 ms (1.0x)  | 5.3150 ms (2.8x)  |
-| i64   | 10000 | -                 | 6.5044 ms (1.5x)  | 4.3432 ms (1.0x)  | 11.486 ms (2.6x)  |
-| str   | 100   | 371.27 µs (3.6x) | 118.89 µs (1.1x) | 104.00 µs (1.0x) | 169.35 µs (1.6x) |
-| str   | 1000  | 36.155 ms (22.8x) | 1.5951 ms (1.0x)  | 1.5868 ms (1.0x)  | 1.9964 ms (1.3x)  |
-| str   | 5000  | -                 | 8.7068 ms (1.0x)  | 10.019 ms (1.2x)  | 11.446 ms (1.3x)  |
-| str   | 10000 | -                 | 17.664 ms (1.0x)  | 22.802 ms (1.3x)  | 24.560 ms (1.4x)  |
-| big   | 100   | 904.78 µs (2.5x) | 2.9397 ms (8.2x)  | 356.56 µs (1.0x) | 697.82 µs (2.0x) |
-| big   | 1000  | 18.878 ms (5.1x)  | 28.950 ms (7.9x)  | 3.6679 ms (1.0x)  | 7.1701 ms (2.0x)  |
-| big   | 5000  | -                 | 279.20 ms (3.6x)  | 77.937 ms (1.0x)  | 95.516 ms (1.2x)  |
-| big   | 10000 | -                 | 792.99 ms (2.3x)  | 338.50 ms (1.0x)  | 489.87 ms (1.4x)  |
+| dtype | batch | hashmap_std       | hashmap_im      | ordmap           | indexmap_im      | indexmap_crate  |
+| ----- | ----- | ----------------- | --------------- | ---------------- | ---------------- | --------------- |
+| i64   | 100   | 7.36µs (1.0x)     | 23.65µs (3.2x)  | 13.11µs (1.8x)   | 41.11µs (5.6x)   | 19.97µs (2.7x)  |
+| i64   | 1000  | 843.37µs (3.1x)   | 464.66µs (1.7x) | 274.00µs (1.0x)  | 846.52µs (3.1x)  | 1.65ms (6.0x)   |
+| i64   | 5000  | -                 | 3.06ms (1.6x)   | 1.94ms (1.0x)    | 5.55ms (2.9x)    | -               |
+| i64   | 10000 | -                 | 6.22ms (1.3x)   | 4.67ms (1.0x)    | 11.67ms (2.5x)   | -               |
+| str   | 100   | 399.44µs (4.0x)   | 116.95µs (1.2x) | 98.81µs (1.0x)   | 155.20µs (1.6x)  | 398.91µs (4.0x) |
+| str   | 1000  | 37.62ms (25.5x)   | 1.52ms (1.0x)   | 1.47ms (1.0x)    | 1.94ms (1.3x)    | 35.64ms (24.1x) |
+| str   | 5000  | -                 | 8.22ms (1.0x)   | 9.51ms (1.2x)    | 11.35ms (1.4x)   | -               |
+| str   | 10000 | -                 | 17.01ms (1.0x)  | 21.61ms (1.3x)   | 24.76ms (1.5x)   | -               |
+| big   | 100   | 914.70µs (117.8x) | 1.22ms (158.0x) | 324.07µs (41.7x) | 648.15µs (83.5x) | 7.76µs (1.0x)   |
+| big   | 1000  | 17.94ms (84.9x)   | 11.79ms (55.8x) | 3.17ms (15.0x)   | 6.27ms (29.7x)   | 211.24µs (1.0x) |
+| big   | 5000  | -                 | 62.55ms (4.0x)  | 15.53ms (1.0x)   | 31.20ms (2.0x)   | -               |
+| big   | 10000 | -                 | 124.49ms (3.7x) | 33.31ms (1.0x)   | 69.43ms (2.1x)   | -               |
 
 ## remove_mut
 (linear) Given a map of size N, time to drain all its items by repeatedly calling .remove(), mutably, in a random order
 
-Note that `.drain()`ing the collection might be considerably faster
+Note that `.drain()`ing the collection might be considerably faster. `indexmap_crate`'s big type appears much faster due to a highly optimized memcpy.
 
-| dtype | batch | hashmap_std       | hashmap_im        | ordmap            | indexmap          |
-| ----- | ----- | ----------------- | ----------------- | ----------------- | ----------------- |
-| i64   | 100   | 1.2943 µs (1.0x) | 3.7433 µs (2.9x) | 2.9135 µs (2.3x) | 6.5872 µs (5.1x) |
-| i64   | 1000  | 13.460 µs (1.0x) | 44.098 µs (3.3x) | 44.231 µs (3.3x) | 95.437 µs (7.1x) |
-| i64   | 5000  | 78.309 µs (1.0x) | 244.54 µs (3.1x) | 347.88 µs (4.4x) | 692.17 µs (8.8x) |
-| i64   | 10000 | 160.77 µs (1.0x) | 434.27 µs (2.7x) | 758.97 µs (4.7x) | 1.4346 ms (8.9x)  |
-| str   | 100   | 9.9188 µs (1.0x) | 14.369 µs (1.4x) | 19.585 µs (2.0x) | 28.777 µs (2.9x) |
-| str   | 1000  | 99.737 µs (1.0x) | 163.88 µs (1.6x) | 260.93 µs (2.6x) | 322.06 µs (3.2x) |
-| str   | 5000  | 592.09 µs (1.0x) | 985.48 µs (1.7x) | 1.6258 ms (2.7x)  | 1.9411 ms (3.3x)  |
-| str   | 10000 | 1.2500 ms (1.0x)  | 1.8837 ms (1.5x)  | 3.5936 ms (2.9x)  | 4.1186 ms (3.3x)  |
-| big   | 100   | 85.359 µs (5.7x) | 101.83 µs (6.7x) | 15.089 µs (1.0x) | 84.346 µs (5.6x) |
-| big   | 1000  | 735.51 µs (6.6x) | 744.02 µs (6.6x) | 112.21 µs (1.0x) | 727.28 µs (6.5x) |
-| big   | 5000  | 8.2428 ms (1.6x)  | 7.4017 ms (1.4x)  | 5.2889 ms (1.0x)  | 8.7223 ms (1.6x)  |
-| big   | 10000 | 34.730 ms (1.0x)  | 45.893 ms (1.3x)  | 40.966 ms (1.2x)  | 61.714 ms (1.8x)  |
+| dtype | batch | hashmap_std      | hashmap_im       | ordmap          | indexmap_im      | indexmap_crate   |
+| ----- | ----- | ---------------- | ---------------- | --------------- | ---------------- | ---------------- |
+| i64   | 100   | 1.31µs (1.0x)    | 3.63µs (2.8x)    | 2.94µs (2.2x)   | 7.02µs (5.3x)    | 6.61µs (5.0x)    |
+| i64   | 1000  | 13.84µs (1.0x)   | 43.98µs (3.2x)   | 45.05µs (3.3x)  | 99.42µs (7.2x)   | 446.30µs (32.2x) |
+| i64   | 5000  | 74.16µs (1.0x)   | 245.16µs (3.3x)  | 349.43µs (4.7x) | 709.92µs (9.6x)  | -                |
+| i64   | 10000 | 159.96µs (1.0x)  | 437.05µs (2.7x)  | 776.89µs (4.9x) | 1.48ms (9.3x)    | -                |
+| str   | 100   | 10.59µs (1.0x)   | 15.35µs (1.4x)   | 15.42µs (1.5x)  | 26.26µs (2.5x)   | 14.70µs (1.4x)   |
+| str   | 1000  | 105.66µs (1.0x)  | 173.97µs (1.6x)  | 217.93µs (2.1x) | 316.29µs (3.0x)  | 607.27µs (5.7x)  |
+| str   | 5000  | 608.14µs (1.0x)  | 975.90µs (1.6x)  | 1.42ms (2.3x)   | 1.90ms (3.1x)    | -                |
+| str   | 10000 | 1.36ms (1.0x)    | 1.78ms (1.3x)    | 3.15ms (2.3x)   | 4.05ms (3.0x)    | -                |
+| big   | 100   | 86.36µs (37.6x)  | 85.62µs (37.2x)  | 22.69µs (9.9x)  | 84.50µs (36.7x)  | 2.29µs (1.0x)    |
+| big   | 1000  | 741.19µs (28.4x) | 727.70µs (27.9x) | 190.76µs (7.3x) | 742.11µs (28.4x) | 26.12µs (1.0x)   |
+| big   | 5000  | 3.66ms (3.8x)    | 3.62ms (3.7x)    | 968.45µs (1.0x) | 3.68ms (3.8x)    | -                |
+| big   | 10000 | 7.17ms (3.8x)    | 7.22ms (3.9x)    | 1.87ms (1.0x)   | 7.37ms (3.9x)    | -                |
 
 ## IndexMap-specific
-### back
-| batch   | dtype | indexmap         |
-| ------- | ----- | ---------------- |
-| 100     | i64   | 1.6001 ns (1.0x) |
-| 1000    | i64   | 2.5607 ns (1.0x) |
-| 5000    | i64   | 3.8135 ns (1.0x) |
-| 10000   | i64   | 3.9608 ns (1.0x) |
-| 50000   | i64   | 5.0282 ns (1.0x) |
-| 100000  | i64   | 5.0901 ns (1.0x) |
-| 500000  | i64   | 6.5425 ns (1.0x) |
-| 1000000 | i64   | 8.0057 ns (1.0x) |
-
-### front
-| batch   | dtype | indexmap         |
-| ------- | ----- | ---------------- |
-| 100     | i64   | 1.0701 ns (1.0x) |
-| 1000    | i64   | 1.7641 ns (1.0x) |
-| 5000    | i64   | 2.3726 ns (1.0x) |
-| 10000   | i64   | 2.5087 ns (1.0x) |
-| 50000   | i64   | 3.2361 ns (1.0x) |
-| 100000  | i64   | 3.3696 ns (1.0x) |
-| 500000  | i64   | 4.2048 ns (1.0x) |
-| 1000000 | i64   | 5.1439 ns (1.0x) |
+### first
+| dtype | batch   | indexmap_im_specific | indexmap_crate_specific |
+| ----- | ------- | -------------------- | ----------------------- |
+| i64   | 100     | 1.02ns (4.5x)        | 229.99ps (1.0x)         |
+| i64   | 1000    | 1.77ns (7.5x)        | 235.74ps (1.0x)         |
+| i64   | 5000    | 2.40ns (10.5x)       | 229.86ps (1.0x)         |
+| i64   | 10000   | 2.41ns (10.5x)       | 230.39ps (1.0x)         |
+| i64   | 50000   | 3.32ns (14.4x)       | 231.06ps (1.0x)         |
+| i64   | 100000  | 3.33ns (14.2x)       | 235.56ps (1.0x)         |
+| i64   | 500000  | 4.26ns (18.2x)       | 235.47ps (1.0x)         |
+| i64   | 1000000 | 5.38ns (23.2x)       | 232.04ps (1.0x)         |
 
 ### get_index
-| batch   | dtype | indexmap          |
-| ------- | ----- | ----------------- |
-| 100     | i64   | 198.14 ns (1.0x)  |
-| 1000    | i64   | 1.6010 µs (1.0x) |
-| 5000    | i64   | 7.6336 µs (1.0x) |
-| 10000   | i64   | 16.420 µs (1.0x) |
-| 50000   | i64   | 87.050 µs (1.0x) |
-| 100000  | i64   | 188.99 µs (1.0x) |
-| 500000  | i64   | 1.1504 ms (1.0x)  |
-| 1000000 | i64   | 2.9002 ms (1.0x)  |
+imbl-index and OrdMap do not support constant-time access by index
+
+| dtype | batch   | indexmap_im_specific | indexmap_crate_specific |
+| ----- | ------- | -------------------- | ----------------------- |
+| i64   | 100     | 197.56ns (61.3x)     | 3.22ns (1.0x)           |
+| i64   | 1000    | 1.63µs (490.8x)      | 3.32ns (1.0x)           |
+| i64   | 5000    | 7.96µs (2488.9x)     | 3.20ns (1.0x)           |
+| i64   | 10000   | 15.87µs (4974.0x)    | 3.19ns (1.0x)           |
+| i64   | 50000   | 85.35µs (26386.1x)   | 3.23ns (1.0x)           |
+| i64   | 100000  | 183.45µs (56672.8x)  | 3.23ns (1.0x)           |
+| i64   | 500000  | 1.15ms (353919.5x)   | 3.25ns (1.0x)           |
+| i64   | 1000000 | 3.41ms (1043788.2x)  | 3.26ns (1.0x)           |
+
+### last
+| dtype | batch   | indexmap_im_specific | indexmap_crate_specific |
+| ----- | ------- | -------------------- | ----------------------- |
+| i64   | 100     | 1.62ns (7.1x)        | 230.66ps (1.0x)         |
+| i64   | 1000    | 2.58ns (10.9x)       | 237.04ps (1.0x)         |
+| i64   | 5000    | 3.84ns (16.8x)       | 229.22ps (1.0x)         |
+| i64   | 10000   | 3.82ns (16.7x)       | 229.60ps (1.0x)         |
+| i64   | 50000   | 5.07ns (22.2x)       | 229.45ps (1.0x)         |
+| i64   | 100000  | 5.05ns (21.7x)       | 233.66ps (1.0x)         |
+| i64   | 500000  | 6.53ns (27.7x)       | 236.24ps (1.0x)         |
+| i64   | 1000000 | 8.32ns (36.2x)       | 230.06ps (1.0x)         |
 
 ## Takeaways
 - Immutable IndexMap offers worst-in-class performance across the immutable structures, but not by an outrageous amount. It only really beats out the standard library's HashMap on clone ops (remove, insert)

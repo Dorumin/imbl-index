@@ -15,6 +15,7 @@ imbl = "7"
 [dev-dependencies]
 proptest = "1.0"
 criterion = "0.7"
+indexmap = "2.14.0"
 rand = { version = "0.9", features = ["small_rng"] }
 
 [[bench]]
